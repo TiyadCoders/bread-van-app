@@ -1,5 +1,4 @@
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity, verify_jwt_in_request
-
 from App.models import User
 from App.database import db
 
@@ -10,7 +9,6 @@ def login(username, password):
     # Store ONLY the user id as a string in JWT 'sub'
     return create_access_token(identity=str(user.id))
   return None
-
 
 def setup_jwt(app):
   jwt = JWTManager(app)
@@ -33,7 +31,6 @@ def setup_jwt(app):
     return db.session.get(User, user_id)
 
   return jwt
-
 
 # Context processor to make 'is_authenticated' available to all templates
 def add_auth_context(app):

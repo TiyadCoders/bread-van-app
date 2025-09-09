@@ -6,5 +6,6 @@ class DriverStatus(Enum):
     DELIVERING: str = "delivering"
 
 class NotificationType(Enum):
-    ARRIVAL: str = "arrival"
-    REQUEST: str = "request"
+    ARRIVED: str = "arrived"
+    REQUESTED: str = "requested"
+    CONFIRMED: str = "confirmed"

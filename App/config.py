@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 def load_config(app, overrides):
     if os.path.exists(os.path.join('./App', 'custom_config.py')):
@@ -17,3 +18,5 @@ def load_config(app, overrides):
     app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
     for key in overrides:
         app.config[key] = overrides[key]
+
+SESSION_FILE = pathlib.Path.home() / ".breadvan_session"
