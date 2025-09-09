@@ -141,7 +141,7 @@ class Driver(User):
         if filter == 'all':
              notifications = db.session.query(Notification).filter(Notification.type.in_([NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value])).all()
         elif filter in [NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value]:
-            notifications = db.session.query(Notification).filter_by(type=filter)
+            notifications = db.session.query(Notification).filter_by(type=filter).all()
 
         if len(notifications) == 0:
             click.secho("Inbox is empty.", fg="yellow")
