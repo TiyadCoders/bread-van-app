@@ -1,8 +1,8 @@
-from App.models import StopRequest
+from App.models import StopRequest, Street
 from App.database import db
 from typing import TYPE_CHECKING
 from .notification import create_notification
-from .. import NotificationType, get_street_by_string
+from .. import NotificationType
 
 if TYPE_CHECKING:
     from App.models import Resident
@@ -10,16 +10,19 @@ if TYPE_CHECKING:
 '''
 CREATE
 '''
-def create_stop_request(resident: Resident):
+def stop_request_exists(street_name: str) -> bool:
     """
-    Create a stop request for a resident's street
+    Check if a stop request exists already
     """
-    db.session.add(StopRequest(resident))
+    return db.session.query(StopRequest).filter_by(street_name=street_name).first() is not None
+
+
+'''
+DELETE
+'''
+def delete_stop_requests(street_name: str) -> None:
+    """
+    Delete all stop requests for a street
+    """
+    db.session.query(StopRequest).filter_by(street_name=street_name).delete()
     db.session.commit()
-
-    create_notification(
-        message=f"'{resident.get_fullname()}' has requested a stop for street '{resident.street_name}'.",
-        notification_type=NotificationType.REQUESTED,
-        street=get_street_by_string(resident.street_name)
-    )
-

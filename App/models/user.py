@@ -56,6 +56,9 @@ class User(db.Model):
     def view_inbox(self, filter: str | None = None) -> None:
         pass
 
+    def __repr__(self):
+        return f"<User {self.id} {self.get_fullname()}>"
+
 class Driver(User):
     __tablename__ = 'drivers'
     id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
@@ -94,7 +97,8 @@ class Driver(User):
             db.session.commit()
 
             return new_stop
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            click.secho(f"[ERROR] {e}.", fg="red")
             db.session.rollback()
             return None
         pass
@@ -133,17 +137,26 @@ class Driver(User):
         db.session.add(self)
         db.session.commit()
 
-
     def view_inbox(self, filter: str | None = None) -> None:
         """View stop request notifications"""
         notifications: list[Notification] = []
 
-        if filter == 'all':
-             notifications = db.session.query(Notification).filter(Notification.type.in_([NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value])).all()
+        if filter == "all":
+            notifications = (
+                db.session.query(Notification)
+                .filter(Notification.type.in_([NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value]))
+                .order_by(Notification.created_at.asc()) # newest last
+                .all()
+            )
         elif filter in [NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value]:
-            notifications = db.session.query(Notification).filter_by(type=filter).all()
+            notifications = (
+                db.session.query(Notification)
+                .filter_by(type=filter)
+                .order_by(Notification.created_at.asc()) # newest last
+                .all()
+            )
 
-        if len(notifications) == 0:
+        if not notifications:
             click.secho("Inbox is empty.", fg="yellow")
             return
 
@@ -175,22 +188,59 @@ class Resident(User):
             'street_name': self.street_name
         }
 
-    def request_stop(self) -> None:
+    def request_stop(self) -> bool:
         """Request a stop for this resident's street"""
         new_request = StopRequest(self)
+
+        # Check if it has stop requests already for street
+        has_stop_request = StopRequest.query.filter_by(street_name=self.street_name).first() is not None
+
+        if has_stop_request:
+            click.secho(f"[WARNING]: Stop requests already exists for street '{self.street_name}'", fg="yellow")
+            return False
+
         db.session.add(new_request)
         db.session.commit()
+
+        return True
 
     def view_inbox(self, filter: str | None = None) -> None:
         """View stop notifications"""
         notifications: list[Notification] = []
 
-        if filter == 'all':
-            notifications = db.session.query(Notification).filter(or_(Notification.street_name == self.street_name, Notification.street_name is None)).all()
-        elif filter in [NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value, NotificationType.ARRIVED.value]:
-            notifications = db.session.query(Notification).filter(and_(or_(Notification.street_name == self.street_name, Notification.street_name is None), Notification.type == filter)).all()
+        if filter == "all":
+            notifications = (
+                db.session.query(Notification)
+                .filter(
+                    or_(
+                        Notification.street_name == self.street_name,
+                        Notification.street_name.is_(None),
+                    )
+                )
+                .order_by(Notification.created_at.asc())  # newest last
+                .all()
+            )
+        elif filter in [
+            NotificationType.REQUESTED.value,
+            NotificationType.CONFIRMED.value,
+            NotificationType.ARRIVED.value,
+        ]:
+            notifications = (
+                db.session.query(Notification)
+                .filter(
+                    and_(
+                        or_(
+                            Notification.street_name == self.street_name,
+                            Notification.street_name.is_(None),
+                        ),
+                        Notification.type == filter,
+                    )
+                )
+                .order_by(Notification.created_at.asc())  # newest last
+                .all()
+            )
 
-        if len(notifications) == 0:
+        if not notifications:
             click.secho("Inbox is empty.", fg="yellow")
             return
 

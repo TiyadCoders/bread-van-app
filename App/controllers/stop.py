@@ -47,6 +47,11 @@ def get_stop_by_id(id: str) -> Stop | None:
     """
     return db.session.query(Stop).filter_by(id=id).one_or_none()
 
+def stop_exists(street_name: str, scheduled_date: str) -> bool:
+    """
+    Check if a stop exists already
+    """
+    return db.session.query(Stop).filter_by(street_name=street_name, scheduled_date=scheduled_date, has_arrived=False).first() is not None
 
 '''
 UPDATE

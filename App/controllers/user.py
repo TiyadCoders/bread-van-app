@@ -84,6 +84,15 @@ GET
 def get_user(id):
     return db.session.get(User, id)
 
+def get_user_by_type(id, type: str) -> User | None:
+    user = db.session.get(User, id)
+
+    if user and user.type == type:
+        return user
+
+    return None
+
+
 def get_all_users() -> list[User]:
     return db.session.scalars(db.select(User)).all()
 

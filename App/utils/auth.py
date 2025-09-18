@@ -3,9 +3,12 @@ import click
 
 from functools import wraps
 from flask.cli import with_appcontext
+
+from App import get_user, get_user_by_type
 from App.config import SESSION_FILE
 from App.database import db
 from App.models import User
+from sqlalchemy.exc import SQLAlchemyError
 
 def save_session(user_id: str):
     with open(SESSION_FILE, "w") as f:
@@ -30,11 +33,16 @@ def login_cli(username: str, password: str) -> bool:
     save_session(user.id)
     return True
 
-def whoami() -> User | None:
-    uid = load_session()
+def whoami(uid: str, type: str) -> User | None:
     if uid is None:
         return None
-    return db.session.get(User, uid)
+
+    user = get_user_by_type(uid, type)
+
+    if not user:
+        raise SQLAlchemyError(f'Failed to find user with id {uid}')
+
+    return user
 
 def requires_login(roles: list[str] | None = None):
     def f (fn):
