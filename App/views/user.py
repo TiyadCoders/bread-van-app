@@ -3,11 +3,10 @@ from flask_jwt_extended import jwt_required, current_user as jwt_current_user
 
 from.index import index_views
 
-from App.controllers import (
+from App.controllers.user import (
     create_user,
     get_all_users,
-    get_all_users_json,
-    jwt_required
+    get_all_users_json
 )
 
 user_views = Blueprint('user_views', __name__, template_folder='../templates')

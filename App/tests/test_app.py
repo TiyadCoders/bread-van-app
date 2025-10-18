@@ -2,16 +2,15 @@ import os, tempfile, pytest, logging, unittest
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from App.main import create_app
-from App.database import db, create_db
+from App.extensions import db
+from App.database import create_db
 from App.models import User
-from App.controllers import (
+from App.controllers.user import (
     create_user,
     get_all_users_json,
-    login,
-    get_user,
-    get_user_by_username,
-    update_user
+    get_user
 )
+from App.controllers.auth import login
 
 
 LOGGER = logging.getLogger(__name__)
@@ -30,7 +29,7 @@ class UserUnitTests(unittest.TestCase):
         user = User("bob", "bobpass")
         user_json = user.get_json()
         self.assertDictEqual(user_json, {"id":None, "username":"bob"})
-    
+
     def test_hashed_password(self):
         password = "mypass"
         hashed = generate_password_hash(password, method='sha256')
@@ -75,5 +74,5 @@ class UsersIntegrationTests(unittest.TestCase):
         update_user(1, "ronnie")
         user = get_user(1)
         assert user.username == "ronnie"
-        
+
 

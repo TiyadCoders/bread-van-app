@@ -12,7 +12,7 @@ from typing import Optional, Iterable
 import click
 from flask.cli import AppGroup
 
-from App.utils import whoami
+from App.utils.auth import whoami
 from App.database import get_migrate
 from App.main import create_app
 from App.models import (
@@ -24,19 +24,21 @@ from App.models import (
     User,
     Stop
 )
-from App.controllers import (
-    initialize,
+from App.controllers.initialize import initialize
+from App.controllers.street import (
     get_all_streets_json,
     get_all_streets,
+    get_street_by_string
+)
+from App.controllers.user import (
     get_all_drivers_json,
     get_all_drivers,
-    get_street_by_string,
     register_user,
-    create_notification,
-    get_driver_by_id,
-    stop_exists,
-    delete_stop_requests
+    get_driver_by_id
 )
+from App.controllers.notification import create_notification
+from App.controllers.stop import stop_exists
+from App.controllers.stop_request import delete_stop_requests
 
 # --------------------------------------------------------------------------------------
 # App Initialization

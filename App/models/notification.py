@@ -1,4 +1,4 @@
-from App.database import db
+from App.extensions import db
 from .street import Street
 from .enums import NotificationType
 import datetime as dt

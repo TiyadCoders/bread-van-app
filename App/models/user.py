@@ -1,6 +1,6 @@
 import click
 from werkzeug.security import check_password_hash, generate_password_hash
-from App.database import db
+from App.extensions import db
 from .enums import DriverStatus, NotificationType
 from .street import Street
 from .stop import Stop

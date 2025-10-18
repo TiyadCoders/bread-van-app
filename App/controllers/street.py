@@ -1,5 +1,5 @@
 from App.models import Street
-from App.database import db
+from App.extensions import db
 from sqlalchemy.exc import SQLAlchemyError
 
 '''

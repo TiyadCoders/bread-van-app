@@ -1,4 +1,4 @@
-from App.database import db
+from App.extensions import db
 from .street import Street
 from typing import TYPE_CHECKING
 import datetime as dt

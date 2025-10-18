@@ -1,5 +1,5 @@
 from typing import List
-from App.database import db
+from App.extensions import db
 from App.models.notification import Notification
 from App.models.street import Street
 from App.models.enums import NotificationType

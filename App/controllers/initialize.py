@@ -1,5 +1,5 @@
 from .user import create_driver
-from App.database import db
+from App.extensions import db
 from .street import create_street
 from .user import create_resident
 from App.models import NotificationType

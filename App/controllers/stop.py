@@ -1,7 +1,7 @@
 import click
 
 from App.models import Driver, Street, Stop, NotificationType
-from App.database import db
+from App.extensions import db
 from .notification import create_notification
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 

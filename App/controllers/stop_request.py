@@ -1,8 +1,8 @@
 from App.models import StopRequest, Street
-from App.database import db
+from App.extensions import db
 from typing import TYPE_CHECKING
 from .notification import create_notification
-from .. import NotificationType
+from App.models.enums import NotificationType
 
 if TYPE_CHECKING:
     from App.models import Resident
