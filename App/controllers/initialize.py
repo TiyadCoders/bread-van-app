@@ -11,10 +11,10 @@ def initialize():
     db.drop_all()
     db.create_all()
 
-    streets_str = ['Randy Street', 'Author Street', 'Murray Drive', 'Charles Avenue']
+    streets_str = ['Randy Street', 'Author Street', 'Murray Drive', 'Charles Avenue', 'Murray St.']
     streets = [create_street(street) for street in streets_str]
 
-    driver_1 = create_driver('bob', 'bobpass', 'Bob', 'Yi')
+    driver_1 = create_driver('bob', 'bobpass', 'Bob', 'Swagger')
     driver_2 = create_driver('tuck', 'tuckpass', 'Tucker', 'Moore')
     create_resident('rick', 'rickpass', 'Rick', 'Smith', streets[0])
     create_resident('amy', 'amypass', 'Amy', 'Persad', streets[1])
