@@ -32,7 +32,6 @@ class Notification(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, nullable=False)
     read_at = db.Column(db.DateTime, nullable=True)
-    expires_at = db.Column(db.DateTime, nullable=True)
 
     # Relationships
     recipient = db.relationship('User', backref='notifications', lazy='joined')
@@ -52,8 +51,7 @@ class Notification(db.Model):
         recipient: Optional['User'] = None,
         street: Optional[Street] = None,
         category: Optional[NotificationCategory] = None,
-        priority: Optional[NotificationPriority] = None,
-        expires_at: Optional[dt.datetime] = None
+        priority: Optional[NotificationPriority] = None
     ):
         self.title = title
         self.message = message
@@ -77,7 +75,6 @@ class Notification(db.Model):
 
         # Timestamps
         self.created_at = dt.datetime.utcnow()
-        self.expires_at = expires_at
         self.is_read = False
 
     def mark_as_read(self) -> bool:
@@ -93,12 +90,6 @@ class Notification(db.Model):
                 db.session.rollback()
                 return False
         return True
-
-    def is_expired(self) -> bool:
-        """Check if notification has expired"""
-        if self.expires_at:
-            return dt.datetime.utcnow() > self.expires_at
-        return False
 
     def get_age_in_minutes(self) -> int:
         """Get notification age in minutes"""
@@ -119,8 +110,6 @@ class Notification(db.Model):
             'isGlobal': self.is_global,
             'createdAt': self.created_at.isoformat() if self.created_at else None,
             'readAt': self.read_at.isoformat() if self.read_at else None,
-            'expiresAt': self.expires_at.isoformat() if self.expires_at else None,
-            'isExpired': self.is_expired(),
             'ageInMinutes': self.get_age_in_minutes()
         }
 
@@ -143,8 +132,6 @@ class Notification(db.Model):
             'isGlobal': self.is_global,
             'createdAt': self.created_at.isoformat() if self.created_at else None,
             'readAt': self.read_at.isoformat() if self.read_at else None,
-            'expiresAt': self.expires_at.isoformat() if self.expires_at else None,
-            'isExpired': self.is_expired(),
             'ageInMinutes': self.get_age_in_minutes(),
             'formattedCreatedAt': self.format_created_at()
         }
