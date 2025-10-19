@@ -1,8 +1,9 @@
 import click
 
 from App.models import Driver, Street, Stop, NotificationType
+from App.models.enums import NotificationCategory, NotificationPriority
 from App.extensions import db
-from .notification import create_notification
+from .notification import create_street_notification
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 '''
@@ -21,11 +22,15 @@ def create_stop(driver: Driver, street: Street, scheduled_date: str) -> Stop | N
         if not new_stop:
             raise IntegrityError("Failed to create new stop.")
 
-        # Notify residents
-        new_notification = create_notification(
+        # Notify residents with enhanced notification
+        new_notification = create_street_notification(
+            title="New Stop Scheduled",
+            message=f"{driver.get_fullname()} has scheduled a stop for {street.name} on {scheduled_date}",
             street=street,
             notification_type=NotificationType.NEW,
-            message=f"[{new_stop.created_at}]\t{driver.get_fullname()} has scheduled a stop for {street.name} on {scheduled_date}"
+            category=NotificationCategory.SCHEDULE,
+            priority=NotificationPriority.HIGH,
+            expires_in_hours=168  # Expires in 1 week
         )
 
         if not new_notification:

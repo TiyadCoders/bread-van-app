@@ -33,11 +33,24 @@ class User(db.Model):
         self.last_name = last_name
 
     def get_json(self):
+        """Basic JSON serialization for API responses"""
         return{
             'id': self.id,
             'username': self.username,
-            'first_name': self.first_name,
-            'last_name': self.last_name
+            'firstName': self.first_name,
+            'lastName': self.last_name,
+            'type': self.type
+        }
+
+    def to_api_dict(self) -> dict:
+        """Enhanced API serialization with consistent naming"""
+        return {
+            'id': self.id,
+            'username': self.username,
+            'firstName': self.first_name,
+            'lastName': self.last_name,
+            'type': self.type,
+            'fullName': self.get_fullname()
         }
 
     def set_password(self, password) -> None:
@@ -54,6 +67,11 @@ class User(db.Model):
 
     @abstractmethod
     def view_inbox(self, filter: str | None = None) -> None:
+        pass
+
+    @abstractmethod
+    def get_inbox_data(self, filter: str | None = None) -> list[dict]:
+        """Get inbox data as structured list for API responses"""
         pass
 
     def __repr__(self):
@@ -80,7 +98,23 @@ class Driver(User):
         return {
             **super().get_json(), # dict unpack
             'status': self.status,
-            'current_location': self.current_location
+            'currentLocation': self.current_location
+        }
+
+    def to_api_dict(self) -> dict:
+        """Enhanced API serialization for drivers"""
+        return {
+            **super().to_api_dict(),
+            'status': self.status,
+            'currentLocation': self.current_location
+        }
+
+    def get_status_dict(self) -> dict:
+        """Get status information for /api/drivers/<id>/status endpoint"""
+        return {
+            'id': self.id,
+            'status': self.status,
+            'currentLocation': self.current_location
         }
 
     def get_current_status(self) -> str:
@@ -124,18 +158,24 @@ class Driver(User):
         db.session.commit()
         return True
 
-    def update_status(self, driver_status: str | None, where: str) -> None:
-        """Update the driver status"""
+    def update_status(self, driver_status: str | None = None, where: str | None = None) -> bool:
+        """Update the driver status - enhanced for API use"""
         if not driver_status and not where:
-            return
+            return False
 
         if driver_status:
+            # Validate status
+            valid_statuses = [DriverStatus.INACTIVE.value, DriverStatus.EN_ROUTE.value, DriverStatus.DELIVERING.value]
+            if driver_status not in valid_statuses:
+                return False
             self.status = driver_status
+
         if where:
             self.current_location = where
 
         db.session.add(self)
         db.session.commit()
+        return True
 
     def view_inbox(self, filter: str | None = None) -> None:
         """View stop request notifications"""
@@ -163,6 +203,27 @@ class Driver(User):
         for notif in notifications:
             print(notif.to_string())
 
+    def get_inbox_data(self, filter: str | None = None) -> list[dict]:
+        """Get inbox data as structured list for API responses"""
+        notifications: list[Notification] = []
+
+        if filter == "all":
+            notifications = (
+                db.session.query(Notification)
+                .filter(Notification.type.in_([NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value]))
+                .order_by(Notification.created_at.desc()) # newest first for API
+                .all()
+            )
+        elif filter in [NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value]:
+            notifications = (
+                db.session.query(Notification)
+                .filter_by(type=filter)
+                .order_by(Notification.created_at.desc()) # newest first for API
+                .all()
+            )
+
+        return [notif.get_json() for notif in notifications]
+
     def __repr__(self):
         return f"<Driver {self.id} {self.get_fullname()}>"
 
@@ -185,7 +246,14 @@ class Resident(User):
     def get_json(self) -> dict[str, any]:
         return {
             **super().get_json(), # dict unpack
-            'street_name': self.street_name
+            'streetName': self.street_name
+        }
+
+    def to_api_dict(self) -> dict:
+        """Enhanced API serialization for residents"""
+        return {
+            **super().to_api_dict(),
+            'streetName': self.street_name
         }
 
     def request_stop(self) -> bool:
@@ -246,3 +314,41 @@ class Resident(User):
 
         for notif in notifications:
             print(notif.to_string())
+
+    def get_inbox_data(self, filter: str | None = None) -> list[dict]:
+        """Get inbox data as structured list for API responses"""
+        notifications: list[Notification] = []
+
+        if filter == "all":
+            notifications = (
+                db.session.query(Notification)
+                .filter(
+                    or_(
+                        Notification.street_name == self.street_name,
+                        Notification.street_name.is_(None),
+                    )
+                )
+                .order_by(Notification.created_at.desc())  # newest first for API
+                .all()
+            )
+        elif filter in [
+            NotificationType.REQUESTED.value,
+            NotificationType.CONFIRMED.value,
+            NotificationType.ARRIVED.value,
+        ]:
+            notifications = (
+                db.session.query(Notification)
+                .filter(
+                    and_(
+                        or_(
+                            Notification.street_name == self.street_name,
+                            Notification.street_name.is_(None),
+                        ),
+                        Notification.type == filter,
+                    )
+                )
+                .order_by(Notification.created_at.desc())  # newest first for API
+                .all()
+            )
+
+        return [notif.get_json() for notif in notifications]

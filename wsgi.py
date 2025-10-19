@@ -36,7 +36,8 @@ from App.controllers.user import (
     register_user,
     get_driver_by_id
 )
-from App.controllers.notification import create_notification
+from App.controllers.notification import create_street_notification, create_system_notification
+from App.models.enums import NotificationCategory, NotificationPriority
 from App.controllers.stop import stop_exists
 from App.controllers.stop_request import delete_stop_requests
 
@@ -128,13 +129,17 @@ def driver_schedule_stop(driver_id: str, street: str, scheduled_date: str):
 
     new_stop = driver.schedule_stop(street_obj, scheduled_date)
     if new_stop:
-        create_notification(
-            street=street_obj,
-            notification_type=NotificationType.CONFIRMED,
+        create_street_notification(
+            title="Stop Confirmed",
             message=(
                 f"A stop was successfully scheduled by '{driver.get_fullname()}' "
                 f"at street '{street_obj.name}' for '{scheduled_date}'."
             ),
+            street=street_obj,
+            notification_type=NotificationType.CONFIRMED,
+            category=NotificationCategory.SCHEDULE,
+            priority=NotificationPriority.HIGH,
+            expires_in_hours=168  # 1 week
         )
         click.secho(f"Successfully scheduled a stop to '{street_obj.name}'.", fg="green")
     else:
@@ -170,10 +175,18 @@ def driver_mark_arrival(driver_id: str, stop_id: str):
         return
 
     if driver.mark_arrival(stop_id):
-        create_notification(
-            notification_type=NotificationType.ARRIVED,
-            message=f"'{driver.get_fullname()}' has arrived at your street.",
-        )
+        # Get the stop to determine the street
+        stop = Stop.query.get(stop_id)
+        if stop and stop.street:
+            create_street_notification(
+                title="Driver Arrived!",
+                message=f"'{driver.get_fullname()}' has arrived at your street.",
+                street=stop.street,
+                notification_type=NotificationType.ARRIVED,
+                category=NotificationCategory.SERVICE,
+                priority=NotificationPriority.URGENT,
+                expires_in_hours=2  # Expires in 2 hours
+            )
 
         # Remove all stop requests for that street if successful
         stop: Optional[Stop] = Stop.query.get(stop_id)
@@ -265,10 +278,14 @@ def resident_request_stop(resident_id: str):
         return
 
     if resident.request_stop():
-        create_notification(
+        create_street_notification(
+            title="Stop Requested",
             message=f"'{resident.get_fullname()}' has requested a stop for street '{resident.street_name}'.",
-            notification_type=NotificationType.REQUESTED,
             street=get_street_by_string(resident.street_name),
+            notification_type=NotificationType.REQUESTED,
+            category=NotificationCategory.SERVICE,
+            priority=NotificationPriority.NORMAL,
+            expires_in_hours=72  # Expires in 3 days
         )
         click.secho("Request was made.", fg="green")
 

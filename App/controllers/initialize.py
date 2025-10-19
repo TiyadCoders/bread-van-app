@@ -3,7 +3,8 @@ from App.extensions import db
 from .street import create_street
 from .user import create_resident
 from App.models import NotificationType
-from .notification import create_notification
+from App.models.enums import NotificationCategory, NotificationPriority
+from .notification import create_street_notification, create_notification
 
 
 def initialize():
@@ -25,36 +26,52 @@ def initialize():
         street=streets[0],
         date='2025-09-14'
     )
-    create_notification(
+    create_street_notification(
+        title="Stop Scheduled",
+        message=f"A stop was successfully scheduled by '{driver_1.get_fullname()}' at street '{streets[0].name}' for '2025-09-14'.",
         street=streets[0],
         notification_type=NotificationType.CONFIRMED,
-        message=f"A stop was successfully scheduled by '{driver_1.get_fullname()}' at street '{streets[0].name}' for '2025-09-14'.",
+        category=NotificationCategory.SCHEDULE,
+        priority=NotificationPriority.HIGH,
+        expires_in_hours=168  # 1 week
     )
 
     driver_2.schedule_stop(
         street=streets[0],
         date='2025-09-20'
     )
-    create_notification(
+    create_street_notification(
+        title="Stop Scheduled",
+        message=f"A stop was successfully scheduled by '{driver_2.get_fullname()}' at street '{streets[0].name}' for '2025-09-20'.",
         street=streets[0],
         notification_type=NotificationType.CONFIRMED,
-        message=f"A stop was successfully scheduled by '{driver_2.get_fullname()}' at street '{streets[0].name}' for '2025-09-20'.",
+        category=NotificationCategory.SCHEDULE,
+        priority=NotificationPriority.HIGH,
+        expires_in_hours=168  # 1 week
     )
 
     stop_1 = driver_1.schedule_stop(
         street=streets[1],
         date='2025-09-14'
     )
-    create_notification(
+    create_street_notification(
+        title="Stop Scheduled",
+        message=f"A stop was successfully scheduled by '{driver_1.get_fullname()}' at street '{streets[1].name}' for '2025-09-14'.",
         street=streets[1],
         notification_type=NotificationType.CONFIRMED,
-        message=f"A stop was successfully scheduled by '{driver_1.get_fullname()}' at street '{streets[1].name}' for '2025-09-14'.",
+        category=NotificationCategory.SCHEDULE,
+        priority=NotificationPriority.HIGH,
+        expires_in_hours=168  # 1 week
     )
 
     driver_1.mark_arrival(stop_1.id)
-    create_notification(
-        notification_type=NotificationType.ARRIVED,
+    create_street_notification(
+        title="Driver Arrived!",
         message=f"'{driver_1.get_fullname()}' has arrived at your street.",
-        street = streets[0]
+        street=streets[0],
+        notification_type=NotificationType.ARRIVED,
+        category=NotificationCategory.SERVICE,
+        priority=NotificationPriority.URGENT,
+        expires_in_hours=2  # Expires in 2 hours
     )
 

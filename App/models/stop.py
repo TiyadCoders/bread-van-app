@@ -30,18 +30,46 @@ class Stop(db.Model):
     def get_json(self) -> dict[str, any]:
         return {
             'id': self.id,
-            'driver_id': self.driver_id,
-            'street_name': self.street_name,
-            'scheduled_date': self.scheduled_date,
-            'created_at': self.created_at,
-            'is_complete': self.has_arrived
+            'driverId': self.driver_id,
+            'streetName': self.street_name,
+            'scheduledDate': self.scheduled_date,
+            'createdAt': self.created_at,
+            'hasArrived': self.has_arrived
         }
 
-    def complete(self) -> None:
-        """Mark the stop as completed"""
+    def to_api_dict(self) -> dict[str, any]:
+        """Enhanced API serialization for stops"""
+        return {
+            'id': self.id,
+            'driverId': self.driver_id,
+            'driver': {
+                'id': self.driver.id,
+                'name': self.driver.get_fullname()
+            } if self.driver else None,
+            'streetName': self.street_name,
+            'scheduledDate': self.scheduled_date,
+            'createdAt': self.created_at,
+            'hasArrived': self.has_arrived,
+            'status': 'completed' if self.has_arrived else 'scheduled'
+        }
+
+    def complete(self) -> bool:
+        """Mark the stop as completed - enhanced for API use"""
+        if self.has_arrived:
+            return False  # Already completed
+
         self.has_arrived = True
-        db.session.add(self)
-        db.session.commit()
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return True
+        except Exception:
+            db.session.rollback()
+            return False
+
+    def mark_arrival(self) -> bool:
+        """API-friendly method to mark arrival"""
+        return self.complete()
 
     def to_string(self):
         return f"A stop is scheduled for the street '{self.street_name}' at '{self.scheduled_date}'" if not self.has_arrived else f"A stop was made at '{self.scheduled_date}' on street '{self.street_name}'"
