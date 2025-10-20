@@ -8,7 +8,7 @@ from App.models import User
 from App.controllers.user import (
     create_user,
     get_all_users_json,
-    get_user
+    get_user_by_id
 )
 from App.controllers.auth import login
 

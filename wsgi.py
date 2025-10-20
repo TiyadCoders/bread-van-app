@@ -284,8 +284,7 @@ def resident_request_stop(resident_id: str):
             street=get_street_by_string(resident.street_name),
             notification_type=NotificationType.REQUESTED,
             category=NotificationCategory.SERVICE,
-            priority=NotificationPriority.NORMAL,
-            expires_in_hours=72  # Expires in 3 days
+            priority=NotificationPriority.NORMAL
         )
         click.secho("Request was made.", fg="green")
 

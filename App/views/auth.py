@@ -5,10 +5,9 @@ from flask_jwt_extended import jwt_required, current_user, unset_jwt_cookies, se
 from.index import index_views
 
 from App.controllers.auth import login
+from App.controllers.user import register_user
 
 auth_views = Blueprint('auth_views', __name__, template_folder='../templates')
-
-
 
 
 '''
@@ -58,6 +57,39 @@ def user_login_api():
 @jwt_required()
 def identify_user():
     return jsonify({'data': current_user.get_json()})
+
+@auth_views.route('/api/register', methods=['POST'])
+def user_register_api():
+    data = request.json
+
+    # Validate required fields
+    required_fields = ['username', 'password', 'firstName', 'lastName', 'role']
+    missing_fields = [field for field in required_fields if field not in data]
+
+    if missing_fields:
+        return jsonify(message=f"Missing required fields: {', '.join(missing_fields)}"), 400
+
+    # Get street (optional, required only for residents)
+    street = data.get('street', '')
+
+    # Register the user
+    user = register_user(
+        username=data['username'],
+        password=data['password'],
+        firstname=data['firstName'],
+        lastname=data['lastName'],
+        role=data['role'],
+        street=street
+    )
+
+    if not user:
+        return jsonify(message="Registration failed. User may already exist or invalid data provided."), 400
+
+    # Return success with user data
+    return jsonify(
+        message="User registered successfully",
+        data=user.get_json()
+    ), 201
 
 @auth_views.route('/api/logout', methods=['GET'])
 def logout_api():

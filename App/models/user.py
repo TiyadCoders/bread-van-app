@@ -207,21 +207,24 @@ class Driver(User):
         """Get inbox data as structured list for API responses"""
         notifications: list[Notification] = []
 
-        if filter == "all":
+        # Default to "all" if no filter provided
+        if filter is None or filter == "all":
             notifications = (
                 db.session.query(Notification)
                 .filter(Notification.type.in_([NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value]))
-                .order_by(Notification.created_at.desc()) # newest first for API
+                .order_by(Notification.created_at.desc())
                 .all()
             )
+        # Check if filter is a valid notification type for drivers
         elif filter in [NotificationType.REQUESTED.value, NotificationType.CONFIRMED.value]:
             notifications = (
                 db.session.query(Notification)
                 .filter_by(type=filter)
-                .order_by(Notification.created_at.desc()) # newest first for API
+                .order_by(Notification.created_at.desc())
                 .all()
             )
 
+        # If invalid filter, return empty list
         return [notif.get_json() for notif in notifications]
 
     def __repr__(self):
@@ -268,6 +271,23 @@ class Resident(User):
             return False
 
         db.session.add(new_request)
+        db.session.commit()
+
+        # Create notification for drivers
+        from .street import Street
+        from App.models.enums import NotificationCategory, NotificationPriority
+
+        street_obj = db.session.query(Street).filter_by(name=self.street_name).first()
+
+        notification = Notification(
+            title=f"Stop Requested on {self.street_name}",
+            message=f"A resident on {self.street_name} has requested a stop.",
+            notification_type=NotificationType.REQUESTED,
+            street=street_obj,
+            category=NotificationCategory.SERVICE,
+            priority=NotificationPriority.NORMAL
+        )
+        db.session.add(notification)
         db.session.commit()
 
         return True
@@ -319,7 +339,7 @@ class Resident(User):
         """Get inbox data as structured list for API responses"""
         notifications: list[Notification] = []
 
-        if filter == "all":
+        if filter is None or filter == "all":
             notifications = (
                 db.session.query(Notification)
                 .filter(
@@ -328,7 +348,7 @@ class Resident(User):
                         Notification.street_name.is_(None),
                     )
                 )
-                .order_by(Notification.created_at.desc())  # newest first for API
+                .order_by(Notification.created_at.desc())
                 .all()
             )
         elif filter in [
@@ -347,7 +367,7 @@ class Resident(User):
                         Notification.type == filter,
                     )
                 )
-                .order_by(Notification.created_at.desc())  # newest first for API
+                .order_by(Notification.created_at.desc())
                 .all()
             )
 

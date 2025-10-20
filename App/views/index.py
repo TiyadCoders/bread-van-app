@@ -8,11 +8,15 @@ index_views = Blueprint('index_views', __name__, template_folder='../templates')
 def index_page():
     return render_template('index.html')
 
-@index_views.route('/init', methods=['GET'])
+'''
+API Routes
+'''
+
+@index_views.route('/api/init', methods=['GET'])
 def init():
     initialize()
     return jsonify(message='db initialized!')
 
-@index_views.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({'status':'healthy'})
+# @index_views.route('/health', methods=['GET'])
+# def health_check():
+#     return jsonify({'status':'healthy'})

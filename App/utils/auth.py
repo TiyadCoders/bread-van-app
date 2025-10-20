@@ -4,7 +4,7 @@ import click
 from functools import wraps
 from flask.cli import with_appcontext
 
-from App.controllers.user import get_user, get_user_by_type
+from App.controllers.user import get_user_by_id, get_user_by_type
 
 from App.extensions import db
 from App.models import User
@@ -42,7 +42,7 @@ def requires_login(roles: list[str] | None = None):
                 raise click.ClickException("Not logged in. Use 'flask auth login'")
 
             # For CLI, we need to determine user type by querying the user
-            user = get_user(user_id)
+            user = get_user_by_id(user_id)
             if not user:
                 raise click.ClickException("Not logged in. Use 'flask auth login'")
 

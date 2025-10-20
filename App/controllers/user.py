@@ -52,36 +52,38 @@ def create_resident(username: str, password: str, first_name: str, last_name: st
         db.session.rollback()
         raise e
 
-def register_user(username: str, password: str, firstname: str, lastname: str, role: str, street: str) -> bool:
+def register_user(username: str, password: str, firstname: str, lastname: str, role: str, street: str) -> User | None:
     if role == 'resident':
         if not street:
             click.secho("[ERROR]: '--street' option is required for resident registration", fg="red")
-            return False
+            return None
 
         street_obj = get_street_by_string(street)
 
         if not street_obj:
             click.secho("[ERROR]: --street does not exist. Use 'flask street list' to see available streets.", fg="red")
-            return False
+            return None
 
-        if not create_resident(username=username, password=password, first_name=firstname, last_name=lastname, street=street_obj):
-            return False
+        user = create_resident(username=username, password=password, first_name=firstname, last_name=lastname, street=street_obj)
+        if not user:
+            return None
 
         click.secho("Successfully required user.", fg="green")
+        return user
     elif role == 'driver':
-        if not create_driver(username=username, password=password, first_name=firstname, last_name=lastname):
-            return False
+        user = create_driver(username=username, password=password, first_name=firstname, last_name=lastname)
+        if not user:
+            return None
+        return user
     else:
         click.secho(f"[ERROR]: role '{role}' does not exist.", fg="red")
-        return False
-
-    return True
+        return None
 
 
 '''
 GET
 '''
-def get_user(id):
+def get_user_by_id(id):
     return db.session.get(User, id)
 
 def get_user_by_type(id, type: str) -> User | None:

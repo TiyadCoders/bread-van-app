@@ -22,15 +22,11 @@ def create_notification(
     """
     Persist and return a Notification object with enhanced features.
     Maintains backward compatibility with old signature.
+    Note: expires_in_hours parameter is deprecated and ignored.
     """
     # Generate title if not provided (backward compatibility)
     if title is None:
         title = _generate_title_from_type_and_message(notification_type, message)
-
-    # Calculate expiration time
-    expires_at = None
-    if expires_in_hours:
-        expires_at = dt.datetime.utcnow() + dt.timedelta(hours=expires_in_hours)
 
     notif = Notification(
         title=title,
@@ -39,8 +35,7 @@ def create_notification(
         recipient=recipient,
         street=street,
         category=category,
-        priority=priority,
-        expires_at=expires_at
+        priority=priority
     )
     db.session.add(notif)
     db.session.commit()
