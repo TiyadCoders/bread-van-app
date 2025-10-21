@@ -58,6 +58,9 @@ def stop_exists(street_name: str, scheduled_date: str) -> bool:
     """
     return db.session.query(Stop).filter_by(street_name=street_name, scheduled_date=scheduled_date, has_arrived=False).first() is not None
 
+def get_all_stops() -> list[Stop]:
+
+    return db.session.execute(db.select(Stop)).scalars().all()
 '''
 UPDATE
 '''
@@ -74,4 +77,20 @@ def complete_stop(id: str) -> None:
     stop.complete()
 
     db.session.add(stop)
+    db.session.commit()
+
+'''
+DELETE
+'''
+def delete_stop(id: str) -> None:
+    """
+    Delete a stop by its id
+    """
+    stop = get_stop_by_id(id)
+
+    if not stop:
+        click.secho(f"[ERROR]: Failed to find stop with id '{id}'.", fg="red")
+        return
+
+    db.session.delete(stop)
     db.session.commit()

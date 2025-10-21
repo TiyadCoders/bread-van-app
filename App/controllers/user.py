@@ -96,10 +96,10 @@ def get_user_by_type(id, type: str) -> User | None:
 
 
 def get_all_users() -> list[User]:
-    return db.session.scalars(db.select(User)).all()
+    return db.session.execute(db.select(User)).scalars().all()
 
 def get_all_drivers() -> list[Driver]:
-    return db.session.scalars(db.select(Driver)).all()
+    return db.session.execute(db.select(Driver)).scalars().all()
 
 def get_all_drivers_json() -> list[dict[str, str]]:
     drivers = get_all_drivers()

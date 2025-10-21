@@ -15,7 +15,7 @@ def get_all_streets() -> list[Street]:
     """
     Get all streets
     """
-    return db.session.scalars(db.select(Street)).all()
+    return db.session.execute(db.select(Street)).scalars().all()
 
 def get_all_streets_json() -> list[dict[str, str]]:
     """

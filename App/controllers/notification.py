@@ -145,7 +145,7 @@ def get_notifications_by_street(street: Street, include_expired: bool = False) -
         )
 
     stmt = stmt.order_by(Notification.created_at.desc())
-    return list(db.session.scalars(stmt).all())
+    return list(db.session.execute(stmt).scalars().all())
 
 
 def get_notifications_by_type(
@@ -171,7 +171,7 @@ def get_notifications_by_type(
         )
 
     stmt = stmt.order_by(Notification.created_at.desc())
-    return list(db.session.scalars(stmt).all())
+    return list(db.session.execute(stmt).scalars().all())
 
 
 def get_notifications_by_user(
@@ -215,7 +215,7 @@ def get_notifications_by_user(
     )
 
     stmt = stmt.order_by(Notification.created_at.desc()).limit(limit)
-    return list(db.session.scalars(stmt).all())
+    return list(db.session.execute(stmt).scalars().all())
 
 
 def get_unread_count(user: User, include_global: bool = True) -> int:
@@ -282,11 +282,11 @@ def mark_all_notifications_as_read(user: User) -> int:
 def cleanup_expired_notifications() -> int:
     """Delete expired notifications"""
     try:
-        expired_notifications = db.session.scalars(
+        expired_notifications = db.session.execute(
             db.select(Notification).where(
                 Notification.expires_at < dt.datetime.utcnow()
             )
-        ).all()
+        ).scalars().all()
 
         count = len(expired_notifications)
         for notification in expired_notifications:
