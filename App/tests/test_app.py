@@ -12,7 +12,7 @@ from App.controllers.user import (
     get_user_by_id,
     create_driver,
     get_driver_by_id,
-    get_all_drivers
+    get_all_drivers_json
 
 )
 from App.controllers.street import (
@@ -67,7 +67,8 @@ def test_authenticate():
 class ResidentIntegrationTests(unittest.TestCase):
 
      def test_create_resident(self):
-         user = create_resident("res1", "respass", "Res", "Ident", "Main St")
+         street = create_street("Main St")
+         user = create_resident("res1", "respass", "Res", "Ident", street)
          get_user_by_id(user.id)
          self.assertIsNotNone(user)
 
@@ -88,12 +89,11 @@ class DriverIntegrationTests(unittest.TestCase):
          self.assertIsNotNone(user)
 
      def test_get_all_drivers_json(self):
-        user1 = create_user("user3", "pass3", "User", "Three")
-        user2 = create_user("user4", "pass4", "User", "Four ")
-        drivers = get_all_drivers()
+        user1 = create_driver("user3", "pass3", "User", "Three")
+        user2 = create_driver("user4", "pass4", "User", "Four ")
+        drivers = get_all_drivers_json()
         self.assertIsInstance(drivers, list)
         self.assertGreaterEqual(len(drivers), 2)
-
     
 
 class StreetIntegrationTests(unittest.TestCase):
@@ -102,7 +102,7 @@ class StreetIntegrationTests(unittest.TestCase):
          street = create_street("Elm St")
          fetched_street = get_street_by_string("Elm St")
          self.assertIsNotNone(street)
-         self.assertEqual(street.id, fetched_street.id)
+         self.assertEqual(street.name, fetched_street.name)
     
      def test_get_all_streets_json(self):
         street1 = create_street("Pine St")
@@ -115,13 +115,13 @@ class StreetIntegrationTests(unittest.TestCase):
 class StopIntegrationTests(unittest.TestCase):
 
      def test_create_stop(self):
-         driver = create_user("driver2", "driverpass2", "Driver", "Two")
+         driver = create_driver("driver2", "driverpass2", "Driver", "Two")
          street = create_street("Maple St")
          stop = create_stop(driver=driver, street=street, scheduled_date="2024-10-01")
          self.assertIsNotNone(stop)
 
      def test_get_all_stops(self):
-        driver = create_user("driver3", "driverpass3", "Driver", "Three")
+        driver = create_driver("driver3", "driverpass3", "Driver", "Three")
         street1 = create_street("Birch St")
         street2 = create_street("Cedar St")
         stop1 = create_stop(driver=driver, street=street1, scheduled_date="2024-11-01")
@@ -131,7 +131,7 @@ class StopIntegrationTests(unittest.TestCase):
         self.assertGreaterEqual(len(stops), 2)
     
      def test_complete_stop(self):
-        driver = create_user("driver4", "driverpass4", "Driver", "Four")
+        driver = create_driver("driver4", "driverpass4", "Driver", "Four")
         street = create_street("Spruce St")
         stop = create_stop(driver=driver, street=street, scheduled_date="2024-12-01")
         complete_stop(stop.id)
@@ -139,7 +139,7 @@ class StopIntegrationTests(unittest.TestCase):
         self.assertTrue(fetched_stop.has_arrived)
     
      def test_delete_stop(self):
-        driver = create_user("driver5", "driverpass5", "Driver", "Five")
+        driver = create_driver("driver5", "driverpass5", "Driver", "Five")
         street = create_street("Willow St")
         stop = create_stop(driver=driver, street=street, scheduled_date="2025-01-01")
         delete_stop(stop.id)

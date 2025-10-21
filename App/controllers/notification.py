@@ -129,7 +129,7 @@ def _generate_title_from_type_and_message(notification_type: NotificationType, m
 '''
 GET
 '''
-def get_notifications_by_street(street: Street, include_expired: bool = False) -> List[Notification]:
+def get_notifications_by_street(street: Street, include_expired: bool = True) -> List[Notification]:
     """
     Return all notifications for a given Street (newest first).
     """
