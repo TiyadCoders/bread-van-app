@@ -288,6 +288,28 @@ class NotificationIntegrationTests(unittest.TestCase):
             unread_count_after = get_unread_count(user)
             self.assertEqual(unread_count_after, initial_count)
 
+        def test_create_street_notification_with_type_filter(self):
+            street_name = "Filter Ave"
+            street = create_street(street_name) or get_street_by_string(street_name)
+            self.assertIsNotNone(street)
 
+            title = "Schedule Drop"
+            msg = "Collection schedule updated."
+            notif = create_street_notification(
+                title=title,
+                message=msg,
+                street=street,
+                notification_type=NotificationType.SCHEDULE,
+            )
+            self.assertIsNotNone(notif)
+
+            results = get_notifications_by_type(NotificationType.SCHEDULE, street=street)
+            self.assertIsInstance(results, list)
+            self.assertGreaterEqual(len(results), 1)
+            self.assertIn(title, {getattr(n, "title", None) for n in results})
+
+            other = get_notifications_by_type(NotificationType.CONFIRMED, street=street)
+            self.assertIsInstance(other, list)
+            self.assertNotIn(title, {getattr(n, "title", None) for n in other})
 
 
