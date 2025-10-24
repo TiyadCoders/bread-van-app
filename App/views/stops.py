@@ -38,13 +38,27 @@ def get_stops_action():
     return jsonify({'data': stops_json})
 
 @stop_views.route('/api/stops/<int:id>', methods=['PATCH'])
+@jwt_required()
 def complete_stop_action(id):
-    complete_stop(id)
     stop = get_stop_by_id(id)
-    if not stop.has_arrived:
+    if not stop:
+        return jsonify(message="Stop not found"), 404
+
+    if stop.has_arrived:
+        return jsonify({
+            "message": "Stop successfully marked as arrived",
+            "data": stop.get_json()
+        }), 200
+
+    if not stop.complete():
         return jsonify(message="Stop wasnt marked as arrived"), 400
-    
-    return jsonify(message="Stop successfully marked as arrived"), 200
+
+    stop = get_stop_by_id(id)
+
+    return jsonify({
+        "message": "Stop successfully marked as arrived",
+        "data": stop.get_json()
+    }), 200
 
 @stop_views.route('/api/stops/<int:id>', methods=['DELETE'])
 def delete_stop_action(id):
@@ -61,7 +75,6 @@ def create_stop_action():
     if not street_name or not scheduled_date:
         return jsonify(message="Missing data"), 400
 
-    # ✅ Use the currently logged-in driver
     driver = jwt_current_user
     if not driver or driver.type != 'driver':
         return jsonify(message="Only drivers can create stops"), 403
