@@ -3,11 +3,13 @@ from flask_jwt_extended import jwt_required, current_user as jwt_current_user
 
 from.index import index_views
 
-from App.controllers import (
+from App.controllers.user import (
     create_user,
     get_all_users,
     get_all_users_json,
-    jwt_required
+    get_all_drivers_json,
+    get_user_by_id,
+    get_driver_by_id
 )
 
 user_views = Blueprint('user_views', __name__, template_folder='../templates')
@@ -17,24 +19,82 @@ def get_user_page():
     users = get_all_users()
     return render_template('users.html', users=users)
 
-@user_views.route('/users', methods=['POST'])
-def create_user_action():
-    data = request.form
-    flash(f"User {data['username']} created!")
-    create_user(data['username'], data['password'])
-    return redirect(url_for('user_views.get_user_page'))
-
-@user_views.route('/api/users', methods=['GET'])
-def get_users_action():
-    users = get_all_users_json()
-    return jsonify(users)
-
-@user_views.route('/api/users', methods=['POST'])
-def create_user_endpoint():
-    data = request.json
-    user = create_user(data['username'], data['password'])
-    return jsonify({'message': f"user {user.username} created with id {user.id}"})
-
 @user_views.route('/static/users', methods=['GET'])
 def static_user_page():
   return send_from_directory('static', 'static-user.html')
+
+
+'''
+API Routes
+'''
+
+@user_views.route('/api/users', methods=['GET'])
+@jwt_required()
+def get_users_action():
+    users = get_all_users_json()
+    return jsonify({'data': users})
+
+@user_views.route('/api/users/<int:id>', methods=['GET'])
+@jwt_required()
+def get_user_action(id):
+    user = get_user_by_id(id)
+    if not user:
+        return jsonify(message="User not found"), 404
+    return jsonify({'data': user.get_json()})
+
+
+@user_views.route('/api/users/inbox', methods=['GET'])
+@jwt_required()
+def get_user_inbox():
+    # Get filter from query parameters (e.g., ?filter=requested or ?filter=confirmed or ?filter=all)
+    filter_param = request.args.get('filter', None)
+    return jsonify({'data': jwt_current_user.get_inbox_data(filter=filter_param)})
+
+
+@user_views.route('/api/drivers', methods=['GET'])
+def get_drivers_action():
+    drivers = get_all_drivers_json()
+    return jsonify({'data': drivers})
+
+@user_views.route('/api/drivers/<int:id>', methods=['GET'])
+def get_driver_action(id):
+    driver = get_driver_by_id(id)
+    if not driver:
+        return jsonify(message="Driver not found"), 404
+    return jsonify({'data': driver.get_json()})
+
+@user_views.route('/api/drivers/<int:id>/status', methods=['GET'])
+def get_driver_status_action(id):
+    driver = get_driver_by_id(id)
+    if not driver:
+        return jsonify(message="Driver not found"), 404
+
+    status_data = driver.get_status_dict()
+
+    return jsonify({
+        "data": status_data,
+        "status": status_data["status"],
+        "location": status_data.get("currentLocation")
+    }), 200
+
+@user_views.route('/api/drivers/<int:id>/status', methods=['PUT'])
+def update_driver_status_action(id):
+    driver = get_driver_by_id(id)
+    if not driver:
+        return jsonify(message="Driver not found"), 404
+
+    data = request.json
+    new_status = data.get("status")
+    new_location = data.get("location")
+
+    if not new_status and not new_location:
+        return jsonify(message="No update data provided"), 400
+
+    success = driver.update_status(driver_status=new_status, where=new_location)
+
+    if not success:
+        return jsonify(message="Invalid status or location update"), 400
+
+    return jsonify({
+        "data": {"message": "Status updated successfully"}
+    }), 200

@@ -1,0 +1,1143 @@
+{
+	"info": {
+		"_postman_id": "1d7123e5-142e-47bb-aff3-e53000a55fc7",
+		"name": "Bread Van Application",
+		"description": "## API Endpoints Documentation\n\n### Overview\n\nWelcome to the **Api** collection!  \nThis collection provides endpoints for managing users, authentication, drivers, residents, stops, and streets. It is organized into folders for clarity and ease of use.\n\n**Features:**\n\n- User management (list, detail, inbox)\n    \n- Authentication (login, register, identify)\n    \n- Driver operations (status, info, update)\n    \n- Resident operations (profile, request stop)\n    \n- Stop management (list, create, update, delete)\n    \n- Street data access\n    \n\n---\n\n### Authentication\n\nMost endpoints require authentication via a JWT token.\n\n1. Use the **(Auth) Log in to account** endpoint to obtain a token.\n    \n2. The token is automatically saved as `jwt_token` in your environment.\n    \n3. All protected endpoints use this token in the `Authorization: Bearer {{jwt_token}}` header.\n    \n\n---\n\n### Folders & Endpoints\n\n#### 1\\. Auth\n\nHandles authentication and onboarding.\n\n- **(Auth) Log in to account**  \n    `POST {{baseUrl}}/login`  \n    Request: `{ \"email\": \"...\", \"password\": \"...\" }`  \n    Response: `{ \"token\": \"...\", \"id\": ... }`\n    \n- **(Auth) Register as a driver**  \n    `POST {{baseUrl}}/register`\n    \n- **(Auth) Register as a resident**  \n    `POST {{baseUrl}}/register`\n    \n- **(Auth) Identify current user**  \n    `POST {{baseUrl}}/identify`  \n    Requires: Authorization header\n    \n\n#### 2\\. Users\n\nUser-related operations.\n\n- **(User) Get all users**  \n    `GET {{baseUrl}}/users`\n    \n- **(User) Get user by id**  \n    `GET {{baseUrl}}/users/1`\n    \n- **(User) View inbox**  \n    `GET {{baseUrl}}/users/1/inbox`\n    \n\n#### 3\\. Drivers\n\nDriver-specific endpoints.\n\n- **(Driver) Get drivers**  \n    `GET {{baseUrl}}/drivers`\n    \n- **(Driver) Get driver by id**  \n    `GET {{baseUrl}}/drivers/1`\n    \n- **(Driver) Get driver status by id**  \n    `GET {{baseUrl}}/drivers/1/status`\n    \n- **(Driver) Update driver status by id**  \n    `PUT {{baseUrl}}/drivers/1/status`\n    \n\n#### 4\\. Residents\n\nResident operations.\n\n- **(Resident) Get residents**  \n    `GET {{baseUrl}}/residents`\n    \n- **(Resident) Get resident by id**  \n    `GET {{baseUrl}}/residents/3`\n    \n- **(Resident) Request a stop**  \n    `POST {{baseUrl}}/residents/3/request`\n    \n\n#### 5\\. Stops\n\nManage delivery and pickup stops.\n\n- **(Stop) Get all stops**  \n    `GET {{baseUrl}}/stops`\n    \n- **(Stop) Create a stop**  \n    `POST {{baseUrl}}/stops`\n    \n- **(Stop) Mark arrival by id**  \n    `PATCH {{baseUrl}}/stops/1`\n    \n- **(Stop) Delete stop by id**  \n    `DELETE {{baseUrl}}/stops/id`\n    \n\n#### 6\\. Streets\n\nStreet data endpoints.\n\n- **(Street) Get all streets**  \n    `GET {{baseUrl}}/streets`\n    \n\n---\n\n### Response Format\n\nAll endpoints return JSON.  \nA typical response structure:\n\n``` json\n{\n  \"data\": { /* resource or array */ },\n  \"message\": \"Operation successful\"\n}\n\n ```\n\nError responses may include:\n\n``` json\n{\n  \"error\": \"An error has occured\"\n}\n\n ```\n\n---\n\n### Usage Tips\n\n- Set your environment variables (`baseUrl`, `jwt_token`) before running requests.\n    \n- Use the login endpoint first to authenticate.\n    \n- Explore folders for grouped functionality.\n    \n- Check the Tests tab in each request for automated checks.\n    \n\n---\n\n### Learn More\n\n- [Postman Collections Overview](https://learning.postman.com/docs/collections/collections-overview/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "42563876"
+	},
+	"item": [
+		{
+			"name": "Initialize",
+			"item": [
+				{
+					"name": "(Init) Initialize application",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/init",
+						"description": "**Purpose:**  \nInitialize the database. Removes all of the data previously added.\n\n**HTTP Method & Endpoint:**  \nGET `http://localhost:8080/api/init`"
+					},
+					"response": []
+				}
+			],
+			"description": "Handles application initialization.  \nIncludes an endpoint to initialize the database.",
+			"auth": {
+				"type": "noauth"
+			}
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "(Auth) Log in to account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Capture JWT token from response and save to environment",
+									"if (pm.response.code === 200) {",
+									"    try {",
+									"        var jsonData = pm.response.json();",
+									"        if (jsonData.access_token) {",
+									"            pm.environment.set('jwt_token', jsonData.access_token);",
+									"        }",
+									"    } catch (e) {",
+									"        // Handle non-JSON or missing token",
+									"        console.error(e);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"bob\",\n    \"password\": \"bobpass\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/login",
+						"description": "**Purpose:**  \nAuthenticate a user and obtain a JWT token for subsequent API requests.\n\n**HTTP Method & Endpoint:**  \nPOST `{{baseUrl}}/login`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Auth) Register as a driver",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Resident is successfully registered with a status of 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201]);",
+									"    const json = pm.response.json();",
+									"",
+									"    pm.expect(json.data.id).to.be.not.null;",
+									"    pm.expect(json.data.type).to.eql(\"driver\");",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"Amy\",\n    \"password\": \"bobpass\",\n    \"confrmPassword\": \"bobpass\",\n    \"firstName\": \"Amy\",\n    \"lastName\": \"Swagger\",\n    \"role\": \"driver\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/register",
+						"description": "**Purpose:**  \nRegister a new driver account in the system.\n\n**HTTP Method & Endpoint:**  \nPOST `{{baseUrl}}/register`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Auth) Register as a resident",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Resident is successfully registered with a 201 status code\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201]);",
+									"    const json = pm.response.json();",
+									"",
+									"    pm.expect(json.data.id).to.be.not.null;",
+									"    pm.expect(json.data.type).to.eql(\"resident\");",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"john\",\n    \"password\": \"bobpass\",\n    \"confrmPassword\": \"bobpass\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"street\": \"Murray Drive\",\n    \"role\": \"resident\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/register",
+						"description": "**Purpose:**  \nRegister a new resident account in the system.\n\n**HTTP Method & Endpoint:**  \nPOST `{{baseUrl}}/register`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Auth) Identify current user",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending",
+									"if (!pm.environment.get('jwt_token')) {",
+									"    throw new Error('jwt_token is not set. Please log in first.');",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"User login is successful and returns user id with a status of 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    const json = pm.response.json();\r",
+									"\r",
+									"    pm.expect(json.data).to.have.property(\"id\");\r",
+									"    pm.expect(json.data.id).to.be.not.null;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{jwt_token}}"
+							}
+						},
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/identify",
+						"description": "**Purpose:**  \nIdentify the currently authenticated user based on the provided JWT token.\n\n**HTTP Method & Endpoint:**  \nPOST `{{baseUrl}}/identify`"
+					},
+					"response": []
+				}
+			],
+			"description": "Handles authentication and user onboarding operations.  \nIncludes endpoints for logging into existing accounts, registering new drivers, and verifying the identity of the currently logged-in user.",
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "(User) Get all users",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"A list of users should be returned with a status of 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.eql(200)\r",
+									"    const json = pm.response.json()\r",
+									"   \r",
+									"    pm.expect(json.data.length).to.be.above(0)\r",
+									"    pm.expect(json.data[0].id).to.not.be.undefined\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/users",
+						"description": "**Purpose:**  \nRetrieve a list of all users registered in the system.\n\n**HTTP Method & Endpoint:**  \nGET `{{baseUrl}}/users`"
+					},
+					"response": []
+				},
+				{
+					"name": "(User) Get user by id",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"A user should be returned with a status of 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.eql(200)\r",
+									"    const json = pm.response.json() // Users\r",
+									"   \r",
+									"    pm.expect(json.data.id).to.not.be.undefined\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/users/1",
+						"description": "**Purpose:**  \nRetrieve details for a specific user by their unique ID.\n\n**HTTP Method & Endpoint:**  \nGET `{{baseUrl}}/users/:id`"
+					},
+					"response": []
+				},
+				{
+					"name": "(User) View inbox",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"User inbox should be accessible\", function () {\r",
+									"    pm.expect(pm.response.code).to.eql(200);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/inbox",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"inbox"
+							],
+							"query": [
+								{
+									"key": "filter",
+									"value": "all",
+									"disabled": true
+								}
+							]
+						},
+						"description": "**Purpose:**  \nRetrieve the inbox messages for a specific user by their unique ID.\n\n**HTTP Method & Endpoint:**  \nGET `{{baseUrl}}/users/:id/inbox?filter=`\n\nThe possible filter values are `requested`, `confirmed`, `all` or `arrived.`"
+					},
+					"response": []
+				}
+			],
+			"description": "Manages general user-related operations.\nProvides endpoints for retrieving all users, viewing a specific user’s details by ID, and accessing a user’s inbox.",
+			"auth": {
+				"type": "bearer",
+				"bearer": {
+					"token": "{{jwt_token}}"
+				}
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Drivers",
+			"item": [
+				{
+					"name": "(Driver) Get drivers",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"A list of drivers should be returned with a status of 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.eql(200)\r",
+									"    const json = pm.response.json()\r",
+									"   \r",
+									"    pm.expect(json.data.length).to.be.above(0)\r",
+									"    pm.expect(json.data[0].id).to.not.be.undefined\r",
+									"    pm.expect(json.data[0].type).to.eql(\"driver\");\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/drivers",
+						"description": "**Purpose:**  \nRetrieve a list of all drivers registered in the system.\n\n**HTTP Method & Endpoint:**  \nGET `{{baseUrl}}/drivers`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Driver) Get driver by id",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"A driver should be returned with a 200 status code\", function () {\r",
+									"    pm.expect(pm.response.code).to.eql(200)\r",
+									"    const json = pm.response.json()\r",
+									"   \r",
+									"    pm.expect(json.data).to.not.be.undefined\r",
+									"    pm.expect(json.data.id).to.not.be.undefined\r",
+									"    \r",
+									"    pm.expect(json.data.type).to.eql(\"driver\");\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/drivers/1",
+						"description": "**Purpose:**  \nRetrieve details for a specific driver by their unique ID.\n\n**HTTP Method & Endpoint:**  \nGET `{{baseUrl}}/drivers/:id`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Driver) Get driver status by id",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Driver status should be returned with a 200 status code\", function () {\r",
+									"    pm.expect(pm.response.code).to.eql(200)\r",
+									"    const json = pm.response.json()\r",
+									"   \r",
+									"    pm.expect(json.data).to.not.be.undefined\r",
+									"    pm.expect(json).to.have.property(\"status\")\r",
+									"    \r",
+									"    pm.expect(json.status).to.not.be.undefined\r",
+									"    pm.expect(json).to.have.property(\"location\")\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/drivers/1/status",
+						"description": "**Purpose:**  \nRetrieve status for a specific driver by their unique ID.\n\n**HTTP Method & Endpoint:**  \nGET `{{baseUrl}}/drivers/:id/status`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Driver) Update driver status by id",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status updated successfully to inactive with a status code of 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.eql(200);\r",
+									"    const json = pm.response.json();\r",
+									"    pm.expect(json.data.message).to.eql(\"Status updated successfully\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"status\": \"inactive\",\r\n    \"location\": null\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/drivers/1/status",
+						"description": "**Purpose:**  \nUpdate status for a specific driver by their unique ID.\n\n**HTTP Method & Endpoint:**  \nPUT`{{baseUrl}}/drivers/:id/status`"
+					},
+					"response": []
+				}
+			],
+			"description": "Covers functionality specific to drivers.\nIncludes endpoints to fetch driver information, retrieve or update their current delivery status (inactive, en_route, or delivering), and access individual driver records by ID.",
+			"auth": {
+				"type": "bearer",
+				"bearer": {
+					"token": "{{jwt_token}}"
+				}
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Residents",
+			"item": [
+				{
+					"name": "(Resident) Get residents",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"A list of residents should be returned with a status of 200\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200)",
+									"    const json = pm.response.json()",
+									"   ",
+									"    pm.expect(json.data.length).to.be.above(0)",
+									"    pm.expect(json.data[0].id).to.not.be.undefined",
+									"    pm.expect(json.data[0].type).to.eql(\"resident\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/residents",
+						"description": "**Purpose:**  \nRetrieve a list of all residents registered in the system.\n\n**HTTP Method & Endpoint:**  \nGET `{{baseUrl}}/residents`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Resident) Get resident by id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"A resident should be returned with a 200 status code\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200)",
+									"    const json = pm.response.json()",
+									"   ",
+									"    pm.expect(json.data).to.not.be.undefined",
+									"    pm.expect(json.data.id).to.not.be.undefined",
+									"    pm.expect(json.data.type).to.eql(\"resident\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/residents/3",
+						"description": "**Purpose:**  \nRetrieve details for a specific resident by their unique ID.\n\n**HTTP Method & Endpoint:**  \nGET `{{baseUrl}}/residents/:id`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Resident) Request a stop",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successfully request a stop with a status code of 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().message).to.eql(\"Request sent successfully\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": "{{baseUrl}}/residents/3/request",
+						"description": "**Purpose:**  \nAllow a resident to request a new delivery or pickup stop.\n\n**HTTP Method & Endpoint:**  \nPOST `{{baseUrl}}/residents/:id/request`"
+					},
+					"response": []
+				}
+			],
+			"description": "Handles resident-specific data and interactions.  \nAllows retrieval of resident profiles or lists, and lets residents submit stop requests for pickups or deliveries.",
+			"auth": {
+				"type": "bearer",
+				"bearer": {
+					"token": "{{jwt_token}}"
+				}
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Stops",
+			"item": [
+				{
+					"name": "(Stop) Get all stops",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Get a list of all stops with a status code of 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"",
+									"    pm.expect(json.data.length).to.be.above(0);",
+									"    pm.expect(json.data[0].streetName).to.be.a('string');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/stops",
+						"description": "**Purpose:**  \nRetrieve a list of all delivery and pickup stops in the system.\n\n**HTTP Method & Endpoint:**  \nGET `{{baseUrl}}/stops`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Stop) Create a stop",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Stop creation is successful and returns message with a status of 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    const json = pm.response.json();",
+									"",
+									"    pm.expect(json.message).to.eql(\"Stop successfully created\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{jwt_token}}"
+							}
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"driver\": 1,\n\t\"streetName\": \"Murray Street\",\n    \"scheduledDate\": \"2025-10-18T23:33:20Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/stops",
+						"description": "**Purpose:**  \nCreate a new delivery or pickup stop in the system.\n\n**HTTP Method & Endpoint:**  \nPOST `{{baseUrl}}/stops`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Stop) Mark arrival by id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Stop is marked as arrived and returns message with a status of 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"",
+									"    pm.expect(json.message).to.eql(\"Stop successfully marked as arrived\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{jwt_token}}"
+							}
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/stops/3",
+						"description": "**Purpose:**  \nMarks a stop as 'arrived' by its ID.\n\n**HTTP Method & Endpoint:**  \nPATCH`{{baseUrl}}/stops/:id`"
+					},
+					"response": []
+				},
+				{
+					"name": "(Stop) Delete stop by id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Stop has successfully been delete with a status code of 200\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+									"    pm.expect(pm.response.json().message).to.eql(\"Stop has been deleted successfully\");",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Ensure jwt_token is set before sending\r",
+									"if (!pm.environment.get('jwt_token')) {\r",
+									"    throw new Error('jwt_token is not set. Please log in first.');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{jwt_token}}"
+							}
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/stops/1",
+						"description": "**Purpose:**  \nDeletes a stop resource by its ID.\n\n**HTTP Method & Endpoint:**  \nDELETE `{{baseUrl}}/stops/:id`"
+					},
+					"response": []
+				}
+			],
+			"description": "Manages delivery and pickup stop information.  \nSupports operations to list, create, update, and delete stops - including marking arrivals and scheduling new stops along defined routes.",
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Streets",
+			"item": [
+				{
+					"name": "(Street) Get all streets",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successfully get a list of streets with a status code of 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    const json = pm.response.json();\r",
+									"    pm.expect(json.data.length).to.be.above(0);\r",
+									"    pm.expect(json.data[0].name).to.be.a('string');\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/streets",
+						"description": "**Purpose:**\n\nRetrieves a list of all street resources.\n\n**HTTP Method & Endpoint:**  \nPOST `{{baseUrl}}/streets`"
+					},
+					"response": []
+				}
+			],
+			"description": "Provides access to registered street data.  \nUsed primarily for populating route information or validating street names associated with stops and resident requests.",
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	]
+}

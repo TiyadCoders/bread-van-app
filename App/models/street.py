@@ -1,4 +1,4 @@
-from App.database import db
+from App.extensions import db
 
 class Street(db.Model):
     name = db.Column(db.String(255), primary_key=True)

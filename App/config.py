@@ -18,5 +18,3 @@ def load_config(app, overrides):
     app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
     for key in overrides:
         app.config[key] = overrides[key]
-
-SESSION_FILE = pathlib.Path.home() / ".breadvan_session"

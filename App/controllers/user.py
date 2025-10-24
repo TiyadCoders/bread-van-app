@@ -1,6 +1,6 @@
 import click
 from App.models import User, Driver, Street, Resident, DriverStatus
-from App.database import db
+from App.extensions import db
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from .street import get_street_by_string
 
@@ -52,36 +52,38 @@ def create_resident(username: str, password: str, first_name: str, last_name: st
         db.session.rollback()
         raise e
 
-def register_user(username: str, password: str, firstname: str, lastname: str, role: str, street: str) -> bool:
+def register_user(username: str, password: str, firstname: str, lastname: str, role: str, street: str) -> User | None:
     if role == 'resident':
         if not street:
             click.secho("[ERROR]: '--street' option is required for resident registration", fg="red")
-            return False
+            return None
 
         street_obj = get_street_by_string(street)
 
         if not street_obj:
             click.secho("[ERROR]: --street does not exist. Use 'flask street list' to see available streets.", fg="red")
-            return False
+            return None
 
-        if not create_resident(username=username, password=password, first_name=firstname, last_name=lastname, street=street_obj):
-            return False
+        user = create_resident(username=username, password=password, first_name=firstname, last_name=lastname, street=street_obj)
+        if not user:
+            return None
 
         click.secho("Successfully required user.", fg="green")
+        return user
     elif role == 'driver':
-        if not create_driver(username=username, password=password, first_name=firstname, last_name=lastname):
-            return False
+        user = create_driver(username=username, password=password, first_name=firstname, last_name=lastname)
+        if not user:
+            return None
+        return user
     else:
         click.secho(f"[ERROR]: role '{role}' does not exist.", fg="red")
-        return False
-
-    return True
+        return None
 
 
 '''
 GET
 '''
-def get_user(id):
+def get_user_by_id(id):
     return db.session.get(User, id)
 
 def get_user_by_type(id, type: str) -> User | None:
@@ -94,10 +96,10 @@ def get_user_by_type(id, type: str) -> User | None:
 
 
 def get_all_users() -> list[User]:
-    return db.session.scalars(db.select(User)).all()
+    return db.session.execute(db.select(User)).scalars().all()
 
 def get_all_drivers() -> list[Driver]:
-    return db.session.scalars(db.select(Driver)).all()
+    return db.session.execute(db.select(Driver)).scalars().all()
 
 def get_all_drivers_json() -> list[dict[str, str]]:
     drivers = get_all_drivers()

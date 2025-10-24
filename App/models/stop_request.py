@@ -1,4 +1,4 @@
-from App.database import db
+from App.extensions import db
 from datetime import  datetime
 from typing import TYPE_CHECKING
 

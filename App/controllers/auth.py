@@ -1,6 +1,6 @@
-from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from App.models import User
-from App.database import db
+from App.extensions import db
 
 def login(username, password):
   result = db.session.execute(db.select(User).filter_by(username=username))
@@ -9,6 +9,26 @@ def login(username, password):
     # Store ONLY the user id as a string in JWT 'sub'
     return create_access_token(identity=str(user.id))
   return None
+
+def setup_jwt_handlers(jwt):
+  """Configure JWT handlers for the JWT manager instance."""
+
+  # Always store a string user id in the JWT identity (sub),
+  # whether a User object or a raw id is passed.
+  @jwt.user_identity_loader
+  def user_identity_lookup(identity):
+    user_id = getattr(identity, "id", identity)
+    return str(user_id) if user_id is not None else None
+
+  @jwt.user_lookup_loader
+  def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    # Cast back to int primary key
+    try:
+      user_id = int(identity)
+    except (TypeError, ValueError):
+      return None
+    return db.session.get(User, user_id)
 
 def setup_jwt(app):
   jwt = JWTManager(app)

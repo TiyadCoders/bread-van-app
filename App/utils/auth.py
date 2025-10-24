@@ -4,25 +4,12 @@ import click
 from functools import wraps
 from flask.cli import with_appcontext
 
-from App import get_user, get_user_by_type
-from App.config import SESSION_FILE
-from App.database import db
+from App.controllers.user import get_user_by_id, get_user_by_type
+
+from App.extensions import db
 from App.models import User
 from sqlalchemy.exc import SQLAlchemyError
 
-def save_session(user_id: str):
-    with open(SESSION_FILE, "w") as f:
-        json.dump({"user_id": user_id}, f)
-
-def load_session() -> str | None:
-    if SESSION_FILE.exists():
-        with open(SESSION_FILE) as f:
-            return json.load(f).get("user_id")
-    return None
-
-def clear_session():
-    if SESSION_FILE.exists():
-        SESSION_FILE.unlink()
 
 def login_cli(username: str, password: str) -> bool:
     user = db.session.execute(
@@ -50,11 +37,16 @@ def requires_login(roles: list[str] | None = None):
         @wraps(fn)
         @with_appcontext
         def wrapper(*args, **kwargs):
-            user = whoami()
+            user_id = load_session()
+            if not user_id:
+                raise click.ClickException("Not logged in. Use 'flask auth login'")
+
+            # For CLI, we need to determine user type by querying the user
+            user = get_user_by_id(user_id)
             if not user:
                 raise click.ClickException("Not logged in. Use 'flask auth login'")
 
-            if not (user.type in roles):
+            if roles and not (user.type in roles):
                 raise click.ClickException("User is not authorized.")
             return fn(*args, **kwargs)
         return wrapper

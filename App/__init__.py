@@ -1,5 +1,3 @@
-from .models import *
-from .views import *
-from .controllers import *
-from .utils import *
-from .main import *
+from .main import create_app
+
+__all__ = ['create_app']
