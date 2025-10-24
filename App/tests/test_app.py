@@ -1,6 +1,7 @@
 import os, tempfile, pytest, logging, unittest, io
 from werkzeug.security import check_password_hash, generate_password_hash
 from contextlib import redirect_stdout
+from datetime import datetime, timedelta
 
 from App.main import create_app
 from App.extensions import db
@@ -380,7 +381,34 @@ class NotificationIntegrationTests(unittest.TestCase):
             allowed = mark_notification_as_read(notif.id, user=user_a)
             self.assertTrue(allowed, "Owner could not mark their own notification as read")
 
+        def test_street_and_user_notifications_ordered_correctly(self):
+            street_name = "Order Ave"
+            street = create_street(street_name) or get_street_by_string(street_name)
+            user = create_resident("order_user_ix1", "pass", "Or", "Der", street)
+            self.assertIsNotNone(user)
 
+            n_old = create_user_notification("Old Personal", "old msg", user)
+            n_mid = create_street_notification("Middle Street", "mid msg", street)
+            n_new = create_user_notification("Newest Personal", "new msg", user)
+            self.assertIsNotNone(n_old)
+            self.assertIsNotNone(n_mid)
+            self.assertIsNotNone(n_new)
+
+            now = datetime.utcnow()
+            n_new.created_at = now - timedelta(seconds=1)
+            n_mid.created_at = now - timedelta(seconds=60)
+            n_old.created_at = now - timedelta(seconds=120)
+            db.session.add_all([n_new, n_mid, n_old])
+            db.session.commit()
+
+            items = get_notifications_by_user(user, include_global=True, unread_only=False, limit=50)
+            self.assertIsInstance(items, list)
+
+            target_titles = {"Old Personal", "Middle Street", "Newest Personal"}
+            ordered_seen = [getattr(i, "title", None) for i in items if getattr(i, "title", None) in target_titles]
+
+            self.assertGreaterEqual(len(ordered_seen), 3)
+            self.assertEqual(ordered_seen[:3], ["Newest Personal", "Middle Street", "Old Personal"])
         
 
 
