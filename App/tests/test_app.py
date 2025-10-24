@@ -328,5 +328,37 @@ class NotificationIntegrationTests(unittest.TestCase):
                 self.assertIsInstance(items, list)
                 titles = {getattr(n, "title", None) for n in items}
                 self.assertIn(title, titles, f"System notification not visible for user {user.username}")
+        
+        def test_user_receives_personal_and_street_notifications(self):
+            street_name = "Both Ave"
+            street = create_street(street_name) or get_street_by_string(street_name)
+            user = create_resident("both_user_ix1", "pass", "Both", "Case", street)
+            self.assertIsNotNone(user)
+
+            personal_title = "Personal Ping"
+            street_title = "Street Ping"
+
+            n_user = create_user_notification(
+                title=personal_title,
+                message="Direct to you.",
+                recipient=user,
+            )
+            self.assertIsNotNone(n_user)
+
+            n_street = create_street_notification(
+                title=street_title,
+                message="FYI for your street.",
+                street=street,
+            )
+            self.assertIsNotNone(n_street)
+
+            items = get_notifications_by_user(user, include_global=True, unread_only=False, limit=200)
+            self.assertIsInstance(items, list)
+            titles = {getattr(n, "title", None) for n in items}
+
+            self.assertIn(personal_title, titles, "Personal notification missing from user's list")
+            self.assertIn(street_title, titles, "Street notification missing from user's list")
+
+        
 
 
