@@ -62,3 +62,18 @@ def get_driver_action(id):
     if not driver:
         return jsonify(message="Driver not found"), 404
     return jsonify({'data': driver.get_json()})
+
+@user_views.route('/api/drivers/<int:id>/status', methods=['GET'])
+def get_driver_status_action(id):
+    driver = get_driver_by_id(id)
+    if not driver:
+        return jsonify(message="Driver not found"), 404
+
+    status_data = driver.get_status_dict()
+
+    return jsonify({
+        "data": status_data,
+        "status": status_data["status"],
+        "location": status_data.get("currentLocation")
+    }), 200
+
