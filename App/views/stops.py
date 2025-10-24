@@ -37,29 +37,6 @@ def get_stops_action():
     stops_json = [stop.get_json() for stop in stops] if stops else []
     return jsonify({'data': stops_json})
 
-@stop_views.route('/api/stops', methods=['POST'])
-def create_stop_action():
-    data = request.get_json()
-    driver_id = data.get('driver')
-    street_name = data.get('streetName')
-    scheduled_date = data.get('scheduledDate')
-    street_obj = get_street_by_string(street_name)
-    if not street_obj:
-        # create_street expects a positional street name
-        street_obj = create_street(street_name)
-        if not street_obj:
-            return jsonify(message="Failed to create street"), 400
-    
-    driver = get_driver_by_id(driver_id)
-    if not driver:
-        return jsonify(message="Driver not found"), 404
-
-    stop = create_stop(driver = driver, street=street_obj, scheduled_date=scheduled_date)
-    if not stop:
-        return jsonify(message="Failed to create stop"), 400
-
-    return jsonify(message = "Stop successfully created"), 201
-
 @stop_views.route('/api/stops/<int:id>', methods=['PATCH'])
 def complete_stop_action(id):
     complete_stop(id)
@@ -73,3 +50,31 @@ def complete_stop_action(id):
 def delete_stop_action(id):
     delete_stop(id)
     return jsonify(message="Stop has been deleted successfully"), 200
+
+@stop_views.route('/api/stops', methods=['POST'])
+@jwt_required()
+def create_stop_action():
+    data = request.get_json()
+    street_name = data.get('streetName')
+    scheduled_date = data.get('scheduledDate')
+
+    if not street_name or not scheduled_date:
+        return jsonify(message="Missing data"), 400
+
+    # ✅ Use the currently logged-in driver
+    driver = jwt_current_user
+    if not driver or driver.type != 'driver':
+        return jsonify(message="Only drivers can create stops"), 403
+
+    street_obj = get_street_by_string(street_name)
+    if not street_obj:
+        street_obj = create_street(street_name)
+        if not street_obj:
+            return jsonify(message="Failed to create street"), 400
+
+    stop = create_stop(driver=driver, street=street_obj, scheduled_date=scheduled_date)
+    if not stop:
+        return jsonify(message="Failed to create stop"), 400
+
+    return jsonify(message="Stop successfully created"), 201
+
