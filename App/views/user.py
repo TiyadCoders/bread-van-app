@@ -77,3 +77,24 @@ def get_driver_status_action(id):
         "location": status_data.get("currentLocation")
     }), 200
 
+@user_views.route('/api/drivers/<int:id>/status', methods=['PUT'])
+def update_driver_status_action(id):
+    driver = get_driver_by_id(id)
+    if not driver:
+        return jsonify(message="Driver not found"), 404
+
+    data = request.json
+    new_status = data.get("status")
+    new_location = data.get("location")
+
+    if not new_status and not new_location:
+        return jsonify(message="No update data provided"), 400
+
+    success = driver.update_status(driver_status=new_status, where=new_location)
+
+    if not success:
+        return jsonify(message="Invalid status or location update"), 400
+
+    return jsonify({
+        "data": {"message": "Status updated successfully"}
+    }), 200
