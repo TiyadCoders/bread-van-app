@@ -35,15 +35,15 @@ def get_residents_action():
     residents_json = [resident.get_json() for resident in residents]
     return jsonify({'data': residents_json})
 
-@resident_views.route('/api/residents/<int:id>/request', methods=['POST'])
-@jwt_required()
-def resident_request_action(id):
-    resident = get_user_by_id(id)
-    if not resident:
-        return jsonify(message="Resident not found"), 404
-    # perform request after confirming resident exists
-    resident.request_stop()
-    return jsonify({'data': resident.street_name})
+# @resident_views.route('/api/residents/<int:id>/request', methods=['POST'])
+# @jwt_required()
+# def resident_request_action(id):
+#     resident = get_user_by_id(id)
+#     if not resident:
+#         return jsonify(message="Resident not found"), 404
+#     # perform request after confirming resident exists
+#     resident.request_stop()
+#     return jsonify({'data': resident.street_name})
 
 @resident_views.route('/api/residents/<int:id>', methods=['GET'])
 @jwt_required()
@@ -52,3 +52,17 @@ def get_resident_action(id):
     if not resident:
         return jsonify(message="Resident not found"), 404
     return jsonify({'data': resident.get_json()})
+
+@resident_views.route('/api/residents/<int:id>/request', methods=['POST'])
+@jwt_required()
+def resident_request_action(id):
+    resident = get_user_by_id(id)
+    if not resident:
+        return jsonify(message="Resident not found"), 404
+
+    success = resident.request_stop()
+
+    if not success:
+        return jsonify(message="Request already exists for this street"), 400
+
+    return jsonify(message="Request sent successfully"), 200
