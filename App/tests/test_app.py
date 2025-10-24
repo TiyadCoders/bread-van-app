@@ -359,6 +359,28 @@ class NotificationIntegrationTests(unittest.TestCase):
             self.assertIn(personal_title, titles, "Personal notification missing from user's list")
             self.assertIn(street_title, titles, "Street notification missing from user's list")
 
+        def test_user_cannot_mark_other_users_notification(self):
+            user_a = create_user("owner_ix1", "pass", "Own", "Er")
+            user_b = create_user("intruder_ix1", "pass", "Intru", "Der")
+            self.assertIsNotNone(user_a)
+            self.assertIsNotNone(user_b)
+
+            notif = create_user_notification(
+                title="Private Msg",
+                message="For A only.",
+                recipient=user_a,
+            )
+            self.assertIsNotNone(notif)
+            self.assertIsNotNone(getattr(notif, "id", None))
+
+            denied = mark_notification_as_read(notif.id, user=user_b)
+
+            self.assertFalse(denied, "Non-owner was able to mark another user's notification as read")
+
+            allowed = mark_notification_as_read(notif.id, user=user_a)
+            self.assertTrue(allowed, "Owner could not mark their own notification as read")
+
+
         
 
 
