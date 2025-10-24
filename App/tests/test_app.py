@@ -234,9 +234,33 @@ class NotificationIntegrationTests(unittest.TestCase):
                 recipient=user,
             )
             self.assertIsNotNone(notif)
-            
+
             after = get_unread_count(user, include_global=True)
             self.assertEqual(after, baseline + 1)
+
+        def test_create_and_mark_user_notification_as_read(self):
+            user = create_user("mark_read_user_ix1", "pass", "Mark", "Read")
+            self.assertIsNotNone(user)
+
+            baseline = get_unread_count(user, include_global=True)
+            self.assertIsInstance(baseline, int)
+
+            notif = create_user_notification(
+                title="Mark Me",
+                message="This will be marked as read.",
+                recipient=user,
+            )
+            self.assertIsNotNone(notif)
+            self.assertIsNotNone(getattr(notif, "id", None))
+
+            after_create = get_unread_count(user, include_global=True)
+            self.assertEqual(after_create, baseline + 1)
+
+            marked = mark_notification_as_read(notif.id, user=user)
+            self.assertTrue(marked, "mark_notification_as_read returned False")
+
+            after_read = get_unread_count(user, include_global=True)
+            self.assertEqual(after_read, baseline)
 
         def test_create_and_fetch_user_notification(self):
             user = create_user("user5", "pass5", "User", "Five")
