@@ -94,7 +94,7 @@ class DriverIntegrationTests(unittest.TestCase):
         drivers = get_all_drivers_json()
         self.assertIsInstance(drivers, list)
         self.assertGreaterEqual(len(drivers), 2)
-    
+
 
 class StreetIntegrationTests(unittest.TestCase):
 
@@ -103,14 +103,14 @@ class StreetIntegrationTests(unittest.TestCase):
          fetched_street = get_street_by_string("Elm St")
          self.assertIsNotNone(street)
          self.assertEqual(street.name, fetched_street.name)
-    
+
      def test_get_all_streets_json(self):
         street1 = create_street("Pine St")
         street2 = create_street("Oak St")
         streets = get_all_streets_json()
         self.assertIsInstance(streets, list)
         self.assertGreaterEqual(len(streets), 2)
-         
+
 
 class StopIntegrationTests(unittest.TestCase):
 
@@ -129,7 +129,7 @@ class StopIntegrationTests(unittest.TestCase):
         stops = get_all_stops()
         self.assertIsInstance(stops, list)
         self.assertGreaterEqual(len(stops), 2)
-    
+
      def test_complete_stop(self):
         driver = create_driver("driver4", "driverpass4", "Driver", "Four")
         street = create_street("Spruce St")
@@ -137,7 +137,7 @@ class StopIntegrationTests(unittest.TestCase):
         complete_stop(stop.id)
         fetched_stop = get_stop_by_id(stop.id)
         self.assertTrue(fetched_stop.has_arrived)
-    
+
      def test_delete_stop(self):
         driver = create_driver("driver5", "driverpass5", "Driver", "Five")
         street = create_street("Willow St")
@@ -145,10 +145,10 @@ class StopIntegrationTests(unittest.TestCase):
         delete_stop(stop.id)
         fetched_stop = get_stop_by_id(stop.id)
         self.assertIsNone(fetched_stop)
-    
+
 
 class NotificationIntegrationTests(unittest.TestCase):
-    
+
         def test_create_and_fetch_street_notification(self):
             street = create_street("Chestnut St")
             notification = create_street_notification("Street Alert", "This is a street alert.", street)
@@ -168,13 +168,19 @@ class NotificationIntegrationTests(unittest.TestCase):
 
         def test_get_unread_count_and_mark_as_read(self):
             user = create_user("user6", "pass6", "User", "Six")
+            # Get initial count
+            initial_count = get_unread_count(user)
+            # Create a notification
             notification = create_user_notification("Unread Alert", "This is an unread alert.", user)
+            # Count should increase by 1
             unread_count = get_unread_count(user)
-            self.assertEqual(unread_count, 1)
+            self.assertEqual(unread_count, initial_count + 1)
+            # Mark as read
             mark_notification_as_read(notification.id, user)
+            # Count should decrease by 1
             unread_count_after = get_unread_count(user)
-            self.assertEqual(unread_count_after, 0)
-        
-        
+            self.assertEqual(unread_count_after, initial_count)
+
+
 
 

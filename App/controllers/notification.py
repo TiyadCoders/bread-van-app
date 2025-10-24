@@ -135,41 +135,33 @@ def get_notifications_by_street(street: Street, include_expired: bool = True) ->
     """
     stmt = db.select(Notification).where(Notification.street_name == street.name)
 
-    # Filter out expired notifications unless explicitly requested
-    if not include_expired:
-        stmt = stmt.where(
-            db.or_(
-                Notification.expires_at.is_(None),
-                Notification.expires_at > dt.datetime.utcnow()
-            )
-        )
 
     stmt = stmt.order_by(Notification.created_at.desc())
     return list(db.session.execute(stmt).scalars().all())
 
 
 def get_notifications_by_type(
-    street: Street,
-    notification_type: NotificationType,
+    notification_type: NotificationType | str,
+    street: Street = None,
     include_expired: bool = False
 ) -> List[Notification]:
     """
-    Return notifications for a given Street and NotificationType (newest first).
+    Return notifications for a given NotificationType (newest first).
+    Optionally filter by street.
     """
-    stmt = db.select(Notification).where(
-        Notification.street_name == street.name,
-        Notification.type == notification_type.value,
-    )
+    # Handle string input for notification_type
+    if isinstance(notification_type, str):
+        type_value = notification_type
+    else:
+        type_value = notification_type.value
 
-    # Filter out expired notifications unless explicitly requested
-    if not include_expired:
-        stmt = stmt.where(
-            db.or_(
-                Notification.expires_at.is_(None),
-                Notification.expires_at > dt.datetime.utcnow()
-            )
-        )
+    conditions = [Notification.type == type_value]
 
+    # Add street filter if provided
+    if street:
+        conditions.append(Notification.street_name == street.name)
+
+    stmt = db.select(Notification).where(db.and_(*conditions))
     stmt = stmt.order_by(Notification.created_at.desc())
     return list(db.session.execute(stmt).scalars().all())
 
@@ -206,13 +198,7 @@ def get_notifications_by_user(
     if unread_only:
         stmt = stmt.where(Notification.is_read == False)
 
-    # Exclude expired notifications
-    stmt = stmt.where(
-        db.or_(
-            Notification.expires_at.is_(None),
-            Notification.expires_at > dt.datetime.utcnow()
-        )
-    )
+    # Note: Expiration logic has been removed
 
     stmt = stmt.order_by(Notification.created_at.desc()).limit(limit)
     return list(db.session.execute(stmt).scalars().all())
@@ -220,30 +206,33 @@ def get_notifications_by_user(
 
 def get_unread_count(user: User, include_global: bool = True) -> int:
     """Get count of unread notifications for a user"""
-    conditions = [
+    # Start with user-specific unread notifications
+    user_conditions = db.and_(
         Notification.recipient_id == user.id,
         Notification.is_read == False
-    ]
+    )
 
+    all_conditions = [user_conditions]
+
+    # Include global notifications if requested
     if include_global:
-        global_conditions = [Notification.is_global == True]
+        global_conditions = db.and_(
+            Notification.is_global == True,
+            Notification.is_read == False
+        )
+        all_conditions.append(global_conditions)
 
+        # Add street-specific notifications for residents
         if hasattr(user, 'street_name') and user.street_name:
-            global_conditions.append(
-                db.and_(
-                    Notification.street_name == user.street_name,
-                    Notification.recipient_id.is_(None)
-                )
+            street_conditions = db.and_(
+                Notification.street_name == user.street_name,
+                Notification.recipient_id.is_(None),
+                Notification.is_read == False
             )
-
-        conditions.append(db.or_(*global_conditions))
+            all_conditions.append(street_conditions)
 
     stmt = db.select(db.func.count(Notification.id)).where(
-        db.and_(*conditions),
-        db.or_(
-            Notification.expires_at.is_(None),
-            Notification.expires_at > dt.datetime.utcnow()
-        )
+        db.or_(*all_conditions)
     )
 
     return db.session.scalar(stmt) or 0
@@ -280,20 +269,5 @@ def mark_all_notifications_as_read(user: User) -> int:
 
 
 def cleanup_expired_notifications() -> int:
-    """Delete expired notifications"""
-    try:
-        expired_notifications = db.session.execute(
-            db.select(Notification).where(
-                Notification.expires_at < dt.datetime.utcnow()
-            )
-        ).scalars().all()
-
-        count = len(expired_notifications)
-        for notification in expired_notifications:
-            db.session.delete(notification)
-
-        db.session.commit()
-        return count
-    except Exception:
-        db.session.rollback()
-        return 0
+    """Delete expired notifications - deprecated function, returns 0 since expiration was removed"""
+    return 0

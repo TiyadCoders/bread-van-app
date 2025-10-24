@@ -2,5 +2,7 @@
     "cSpell.words": [
         "notif",
         "secho"
-    ]
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }
