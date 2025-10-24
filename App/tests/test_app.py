@@ -221,6 +221,23 @@ class NotificationIntegrationTests(unittest.TestCase):
             fetched_notifications = get_notifications_by_street(street)
             self.assertIn(notification, fetched_notifications)
 
+        def test_create_user_notification_appears_in_unread_count(self):
+            user = create_user("unread_user_ix1", "pass", "Un", "Read")
+            self.assertIsNotNone(user)
+
+            baseline = get_unread_count(user, include_global=True)
+            self.assertIsInstance(baseline, int)
+
+            notif = create_user_notification(
+                title="Unread Ping",
+                message="Please check this.",
+                recipient=user,
+            )
+            self.assertIsNotNone(notif)
+            
+            after = get_unread_count(user, include_global=True)
+            self.assertEqual(after, baseline + 1)
+
         def test_create_and_fetch_user_notification(self):
             user = create_user("user5", "pass5", "User", "Five")
             notification = create_user_notification("User Alert", "This is a user alert.", user)
