@@ -79,7 +79,43 @@ class ResidentIntegrationTests(unittest.TestCase):
         self.assertIsInstance(users_json, list)
         self.assertGreaterEqual(len(users_json), 2)
 
+class ResidentIntegrationTests(unittest.TestCase):
 
+     def test_create_resident(self):
+         street = create_street("Main St")
+         user = create_resident("res1", "respass", "Res", "Ident", street)
+         get_user_by_id(user.id)
+         self.assertIsNotNone(user)
+
+     def test_get_all_users_json(self):
+        user1 = create_user("user1", "pass1", "User", "One")
+        user2 = create_user("user2", "pass2", "User", "Two")
+        users_json = get_all_users_json()
+        self.assertIsInstance(users_json, list)
+        self.assertGreaterEqual(len(users_json), 2)
+
+     def test_create_notifications(self):
+        street = create_street("Inbox Ave")
+        user = create_resident("inbox_res", "inbox_pass", "In", "Box", street)
+        self.assertIsNotNone(user)
+
+        n_user = create_user_notification("User Alert", "User-specific notice.", user)
+        self.assertIsNotNone(n_user)
+
+        n_street = create_street_notification("Street Alert", "Street-level notice.", street)
+        self.assertIsNotNone(n_street)
+
+        n_system = create_system_notification("System Alert", "System-wide notice.")
+        self.assertIsNotNone(n_system)
+
+        inbox_items = get_notifications_by_user(user, include_global=True, unread_only=False, limit=50)
+        self.assertIsInstance(inbox_items, list)
+        self.assertGreaterEqual(len(inbox_items), 3)
+        
+        titles = [item.title for item in inbox_items]
+        self.assertIn("User Alert", titles, "User notification not visible in inbox")
+        self.assertIn("System Alert", titles, "System notification not visible in inbox")
+        self.assertIn("Street Alert", titles, "Street notification not visible in inbox for resident")
 
 class DriverIntegrationTests(unittest.TestCase):
 
