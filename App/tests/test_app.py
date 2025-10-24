@@ -311,5 +311,22 @@ class NotificationIntegrationTests(unittest.TestCase):
             other = get_notifications_by_type(NotificationType.CONFIRMED, street=street)
             self.assertIsInstance(other, list)
             self.assertNotIn(title, {getattr(n, "title", None) for n in other})
+        
+        def test_create_system_notification_appears_for_all_users(self):
+            u1 = create_user("sys_user_a_ix1", "pass", "Sys", "A")
+            u2 = create_user("sys_user_b_ix1", "pass", "Sys", "B")
+            self.assertIsNotNone(u1)
+            self.assertIsNotNone(u2)
+
+            title = "Global Broadcast IX1"
+            msg = "This message is for everyone."
+            notif = create_system_notification(title=title, message=msg)
+            self.assertIsNotNone(notif)
+
+            for user in (u1, u2):
+                items = get_notifications_by_user(user, include_global=True, unread_only=False, limit=200)
+                self.assertIsInstance(items, list)
+                titles = {getattr(n, "title", None) for n in items}
+                self.assertIn(title, titles, f"System notification not visible for user {user.username}")
 
 
