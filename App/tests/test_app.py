@@ -410,5 +410,26 @@ class NotificationIntegrationTests(unittest.TestCase):
             self.assertGreaterEqual(len(ordered_seen), 3)
             self.assertEqual(ordered_seen[:3], ["Newest Personal", "Middle Street", "Old Personal"])
         
+        def test_notifications_by_user_respects_limit(self):
+            user = create_user("limit_user_ix1", "pass", "Li", "Mit")
+            self.assertIsNotNone(user)
 
+            made = []
+            for i in range(7):
+                n = create_user_notification(
+                    title=f"Note #{i}",
+                    message=f"Msg {i}",
+                    recipient=user,
+                )
+                self.assertIsNotNone(n)
+                made.append(n)
+
+            limit = 5
+            items = get_notifications_by_user(user, include_global=True, unread_only=False, limit=limit)
+            self.assertIsInstance(items, list)
+            self.assertEqual(len(items), limit)
+
+            wanted = {f"Note #{i}" for i in range(2, 7)}  # last five created: 2..6
+            returned_titles = {getattr(it, "title", None) for it in items}
+            self.assertTrue(returned_titles.issubset(wanted))
 
