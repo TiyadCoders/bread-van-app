@@ -6,7 +6,8 @@ from .auth import auth_views
 from .admin import setup_admin
 from .residents import resident_views
 from .stops import stop_views
+from .street import street_views
 
 
-views = [user_views, index_views, auth_views, resident_views, stop_views]
+views = [user_views, index_views, auth_views, resident_views, stop_views, street_views]
 # blueprints must be added to this list
