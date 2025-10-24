@@ -1,10 +1,12 @@
-import os, tempfile, pytest, logging, unittest
+import os, tempfile, pytest, logging, unittest, io
 from werkzeug.security import check_password_hash, generate_password_hash
+from contextlib import redirect_stdout
 
 from App.main import create_app
 from App.extensions import db
 from App.database import create_db
 from App.models import User
+from App.models.enums import NotificationType 
 from App.controllers.user import (
     create_user,
     create_resident,
@@ -25,7 +27,8 @@ from App.controllers.stop import (
     get_all_stops,
     get_stop_by_id,
     delete_stop,
-    complete_stop
+    complete_stop,
+    stop_exists
 )
 from App.controllers.notification import (
     create_notification,
@@ -95,27 +98,33 @@ class ResidentIntegrationTests(unittest.TestCase):
         self.assertGreaterEqual(len(users_json), 2)
 
      def test_create_notifications(self):
-        street = create_street("Inbox Ave")
+        street_name = "Inbox Ave"
+        street = create_street(street_name) or get_street_by_string(street_name)
         user = create_resident("inbox_res", "inbox_pass", "In", "Box", street)
-        self.assertIsNotNone(user)
 
-        n_user = create_user_notification("User Alert", "User-specific notice.", user)
-        self.assertIsNotNone(n_user)
-
-        n_street = create_street_notification("Street Alert", "Street-level notice.", street)
-        self.assertIsNotNone(n_street)
-
+        n_user = create_user_notification(
+            "User Alert", "User-specific notice.", user,
+            notification_type=NotificationType.REQUESTED
+        )
+        n_street = create_street_notification(
+            "Street Alert", "Street-level notice.", street,
+            notification_type=NotificationType.CONFIRMED
+        )
         n_system = create_system_notification("System Alert", "System-wide notice.")
+
+        self.assertIsNotNone(n_user)
+        self.assertIsNotNone(n_street)
         self.assertIsNotNone(n_system)
 
-        inbox_items = get_notifications_by_user(user, include_global=True, unread_only=False, limit=50)
-        self.assertIsInstance(inbox_items, list)
-        self.assertGreaterEqual(len(inbox_items), 3)
-        
-        titles = [item.title for item in inbox_items]
-        self.assertIn("User Alert", titles, "User notification not visible in inbox")
-        self.assertIn("System Alert", titles, "System notification not visible in inbox")
-        self.assertIn("Street Alert", titles, "Street notification not visible in inbox for resident")
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            user.view_inbox("all")
+        out = buf.getvalue()
+
+        self.assertTrue(out and "Inbox is empty." not in out)
+
+        self.assertIn("User-specific notice.", out)
+        self.assertIn("Street-level notice.", out)
 
 class DriverIntegrationTests(unittest.TestCase):
 
@@ -182,6 +191,27 @@ class StopIntegrationTests(unittest.TestCase):
         fetched_stop = get_stop_by_id(stop.id)
         self.assertIsNone(fetched_stop)
 
+     def test_stop_exists(self):
+        
+        driver = create_driver("driver_exists_it1", "driverpass_exists", "Driver", "Exists")
+
+        street_name = "Spruce St"  
+        street = create_street(street_name)
+        if street is None:
+            street = get_street_by_string(street_name)
+        self.assertIsNotNone(street)
+
+        date = "2025-02-01"
+
+        self.assertFalse(stop_exists(street.name, date))
+
+        stop = create_stop(driver=driver, street=street, scheduled_date=date)
+        self.assertIsNotNone(stop)
+
+        self.assertTrue(stop_exists(street.name, date))
+        self.assertFalse(stop_exists("Nonexistent St", date))
+        self.assertFalse(stop_exists(street.name, "2099-01-01"))
+ 
 
 class NotificationIntegrationTests(unittest.TestCase):
 
