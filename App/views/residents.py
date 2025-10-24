@@ -10,9 +10,6 @@ from App.controllers.user import (
 )
 
 
-
-
-
 resident_views = Blueprint('resident_views', __name__, template_folder='../templates')
 
 @resident_views.route('/residents', methods=['GET'])
@@ -26,6 +23,9 @@ def static_resident_page():
         # point to existing static file
         return send_from_directory('static', 'static-users.html')
 
+'''
+API Routes
+'''
 
 @resident_views.route('/api/residents', methods=['GET'])
 @jwt_required()

@@ -26,10 +26,9 @@ def get_stop_page():
     stops = get_all_stops()
     return render_template('stops.html', stops=stops)
 
-@stop_views.route('/static/stops', methods=['GET'])
-def static_stop_page():
-    # static-stops.html not present in App/static; reuse existing static-user.html
-    return send_from_directory('static', 'static-user.html')
+'''
+API Routes
+'''
 
 @stop_views.route('/api/stops', methods=['GET'])
 def get_stops_action():
@@ -51,7 +50,7 @@ def complete_stop_action(id):
         }), 200
 
     if not stop.complete():
-        return jsonify(message="Stop wasnt marked as arrived"), 400
+        return jsonify(message="Stop was not marked as arrived"), 400
 
     stop = get_stop_by_id(id)
 
